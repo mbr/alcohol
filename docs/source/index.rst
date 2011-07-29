@@ -60,6 +60,7 @@ alcohol and communicates all information about user logins:
                          any.  These are used to add additional information
                          about the nature of the id change.
 
+
 Signal options
 ~~~~~~~~~~~~~~
 While a sender is free to add any number of options to the
@@ -75,3 +76,19 @@ are reserved:
   should be limited in a manner similiar to a session cookie),
   otherwise the number of seconds that the persistance should last
   is given.
+
+
+The ``user_id_reset`` signal
+----------------------------
+Emitted when something that is similiar to a "logout" occured, the
+:data:`~alcohol.user_id_reset` signal tells other components that from now on,
+the ``user_id`` should be considered ``None``.
+
+.. data:: alcohol.user_id_reset
+
+          Sent when a handler has determined that the global User-ID should be
+          reset to ``None``.
+
+          :param sender: The sender.
+          :param kwargs: Extra options, as in :data:`~alcohol.user_id_changed`.
+                         Currently, none are known.
