@@ -19,7 +19,7 @@ def read(fname):
 
 
 setup(name='alcohol',
-      version='0.1dev',
+      version='0.2dev',
       description='User login signal framework.',
       long_description=read('README.rst'),
       keywords='',
