@@ -90,5 +90,24 @@ the ``user_id`` should be considered ``None``.
           reset to ``None``.
 
           :param sender: The sender.
-          :param kwargs: Extra options, as in :data:`~alcohol.user_id_changed`.
-                         Currently, none are known.
+          :param **kwargs: Extra options, as in :data:`~alcohol.user_id_changed`.
+                           Currently, none are known.
+
+
+The ``user_id_required`` signal
+-------------------------------
+When an application needs a login (which is stored in an application specific
+storage outside the scope of alcohol) and there is none present, it can choose
+to raise the :data:`~alcohol.user_id_required` signal. Any receiver of this
+signal is expected to prompt the user for a login and process it.
+
+Note that the return value of the signal may be checked in an
+application-specific manner.
+
+.. data:: alcohol.user_id_required
+
+          A valid login is required and has not been found. This signal is an
+          attempt to prompt the user for a login before aborting the operation.
+
+          :param sender: The sender.
+          :param **kwargs: Extra options.
