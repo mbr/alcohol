@@ -55,10 +55,10 @@ alcohol and communicates all information about user logins:
           :param user_id: The (canonical) string representation of the User-ID
                           that should now be active.
 
-          :param kwargs: Any number of extra options. Every receiver must
-                         accept keyword arguments, even if he does not handle
-                         any.  These are used to add additional information
-                         about the nature of the id change.
+          :param **kwargs: Any number of extra options. Every receiver must
+                           accept keyword arguments, even if he does not handle
+                           any.  These are used to add additional information
+                           about the nature of the id change.
 
 
 Signal options
