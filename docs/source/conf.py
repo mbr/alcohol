@@ -220,4 +220,5 @@ man_pages = [
 intersphinx_mapping = {
     'http://docs.python.org/': None,
     'http://discorporate.us/projects/Blinker/docs/1.1/': None,
+    'http://werkzeug.pocoo.org/docs/': None,
 }
