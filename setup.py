@@ -6,14 +6,6 @@ import sys
 
 from setuptools import setup, find_packages
 
-if sys.version_info < (2, 7):
-    tests_require = ['unittest2']
-    test_suite = 'unittest2.collector'
-else:
-    tests_require = []
-    test_suite = 'unittest.collector'
-
-
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
@@ -28,8 +20,7 @@ setup(name='alcohol',
       url='http://github.com/mbr/',
       license='MIT',
       packages=find_packages(exclude=['tests']),
-      tests_require=tests_require,
-      test_suite='unittest2.collector',
+      install_requires=['blinker'],
       classifiers=[
       ]
      )
