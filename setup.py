@@ -12,9 +12,10 @@ def read(fname):
 
 setup(name='alcohol',
       version='0.2dev',
-      description='User login signal framework.',
+      description='User login signal framework, also includes pbkdf2, token'\
+      'generation and SQLAlchemy user mixins.',
       long_description=read('README.rst'),
-      keywords='',
+      keywords='user,users,login,pbkdf2,sqlalchemy,tokens',
       author='Marc Brinkmann',
       author_email='git@marcbrinkmann.de',
       url='http://github.com/mbr/',
