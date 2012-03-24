@@ -105,3 +105,4 @@ documentation.
 
    pbkdf2
    tokengen
+   mixins
