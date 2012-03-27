@@ -19,7 +19,7 @@ def password_mixin(get_token_generator_func=lambda obj: obj.token_gen,
                    pbkdf_keylength=40,
                    pbkdf_saltlength=8,
                    pbkdf_iterations=10000,
-                   hashfunc=hashlib.sha256):
+                   pbkdf_hashfunc=None):
     """Create a new :py:class:`~alcohol.mixins.PasswordMixin` class.
 
     :param get_token_generator_func: A function that given an object returns a
@@ -29,7 +29,8 @@ def password_mixin(get_token_generator_func=lambda obj: obj.token_gen,
                             password.
     :param pbkdf_saltlength: Length of the salt used, taken from os.urandom.
     :param pbkdf_iterations: The number of pbkdf2 iterations to use.
-    :param hashfunc: The hashfunc to be used.
+    :param pbkdf_hashfunc: The hash function used. Passed on to
+                           :py:func:`~alcohol.pbkdf2.pbkdf2_hex`.
     :return: A class suitable for mixing into any SQLAlchemy model object.
     """
     class PasswordMixin(object):
@@ -42,7 +43,7 @@ def password_mixin(get_token_generator_func=lambda obj: obj.token_gen,
                              salt,  # use as is, same entropy as unhexlified
                              pbkdf_iterations,
                              pbkdf_keylength,
-                             hashfunc
+                             pbkdf_hashfunc
                              )
             return key
 

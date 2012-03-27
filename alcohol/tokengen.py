@@ -37,7 +37,8 @@ class TokenGenerator(object):
        :param pbkdf_iterations: The number of iterations that pbkdf runs.
        :param pbkdf_saltlength: The length of the salt, taken from
                           :py:func:`os.urandom`.
-       :param pbkdf_hashfunc: The hash function used.
+       :param pbkdf_hashfunc: The hash function used. Passed on to
+                              :py:func:`~alcohol.pbkdf2.pbkdf2_hex`.
        """
     max_expires = 2 ** 63 - 1
     _pack_format = '!q'
@@ -48,12 +49,12 @@ class TokenGenerator(object):
                  pbkdf_keylength=40,
                  pbkdf_iterations=1000,
                  pbkdf_saltlength=8,
-                 pbkdf_hashfunc='sha256'):
+                 pbkdf_hashfunc=None):
         self.secret_key = secret_key
         self.pbkdf_keylength = pbkdf_keylength
         self.pbkdf_iterations = pbkdf_iterations
         self.pbkdf_saltlength = pbkdf_saltlength
-        self.hashfunc = getattr(hashlib, pbkdf_hashfunc)
+        self.hashfunc = pbkdf_hashfunc
 
         self._salt_token_length = 2 * pbkdf_saltlength
         self._key_token_length = 2 * pbkdf_keylength
