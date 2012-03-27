@@ -9,6 +9,7 @@ from struct import pack, unpack
 import time
 
 from pbkdf2 import pbkdf2_hex
+from safe_str_cmp import safe_str_cmp
 
 
 class TokenException(Exception):
@@ -129,7 +130,7 @@ class TokenGenerator(object):
         salt, expires, key = self._unpack_token(token)
 
         real_key = self._generate_key(salt, expires, bound_value)
-        if not real_key == key:
+        if not safe_str_cmp(real_key, key):
             raise InvalidTokenException('Token is invalid.')
 
         return expires

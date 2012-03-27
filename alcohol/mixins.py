@@ -8,6 +8,8 @@ import os
 import time
 
 from pbkdf2 import pbkdf2_hex
+from safe_str_cmp import safe_str_cmp
+
 from sqlalchemy import Column, String, DateTime, func
 
 from alcohol.tokengen import TokenGenerator
@@ -45,7 +47,10 @@ def password_mixin(get_token_generator_func=lambda obj: obj.token_gen,
             return key
 
         def check_password(self, password):
-            return self._hash_pw(self._pw_salt, password) == self._pw_key
+            return safe_str_cmp(
+                self._hash_pw(self._pw_salt, password),
+                self._pw_key
+            )
 
         def check_password_reset_token(self, token):
             return get_token_generator_func(self).check_token(token,
