@@ -12,7 +12,7 @@ def read(fname):
 
 setup(name='alcohol',
       version='0.2dev',
-      description='User login signal framework, also includes pbkdf2, token'\
+      description='User login signal framework, also includes pbkdf2, token '\
       'generation and SQLAlchemy user mixins.',
       long_description=read('README.rst'),
       keywords='user,users,login,pbkdf2,sqlalchemy,tokens',
