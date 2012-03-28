@@ -71,11 +71,11 @@ are reserved:
   "active" action by the user, but rather was restored from
   some persistance layer. A typical example is the loading of a
   User-ID from a cookie in a web application.
-- **expire**: If present, the user requested that his login be limited. A value
-  of 0 means do not persist permanently (i.e. persistance
-  should be limited in a manner similiar to a session cookie),
-  otherwise the number of seconds that the persistance should last
-  is given.
+- **expire_on**: If present, the user requested that his login be limited. A
+  value equivalent to an integer 0 means do not persist permanently
+  (i.e. persistance should be limited in a manner similiar to a session
+  cookie), otherwise this value should be a :py:class:`~datetime.datetime`
+  object set to when the login should expire.
 
 
 The ``user_id_reset`` signal
@@ -106,3 +106,11 @@ documentation.
    pbkdf2
    tokengen
    mixins
+
+
+API Changes
+===========
+0.3
+---
+The `expires` parameter on :py:attr:`~alcohol.user_id_changed` has been
+replaced with an `expire_on` parameter.
