@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding=utf8
 
-__version__ = '0.2dev'
+__version__ = '0.3dev'
 
 from blinker.base import Namespace, Signal
 
