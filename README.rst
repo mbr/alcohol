@@ -11,4 +11,4 @@ models.
 While suitable for use in stand-alone, non-web applications it is also a core
 ingredient to `Flask-Alcohol <http://pypi.python.org/pypi/flask-alcohol/>`_, a
 `Flask <http://flask.pocoo.org/>`_ library that takes this concept even
-farther.
+further.
