@@ -85,13 +85,13 @@ class TestTokenGenerator(BaseTestCase):
 
     def test_expiration(self):
         now = int(time.time())
-        future = now+3600
-        far_future = future+7200
+        future = now + 3600
+        far_future = future + 7200
 
         token = self.gen.generate_token(expires=future)
-        self.assertTrue(self.gen.check_token(token, now = now))
-        self.assertFalse(self.gen.check_token(token, now = future))
-        self.assertFalse(self.gen.check_token(token, now = far_future))
+        self.assertTrue(self.gen.check_token(token, now=now))
+        self.assertFalse(self.gen.check_token(token, now=future))
+        self.assertFalse(self.gen.check_token(token, now=far_future))
 
     def test_length(self):
         self.assertLessEqual(
