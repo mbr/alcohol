@@ -21,7 +21,7 @@ setup(name='alcohol',
       url='http://github.com/mbr/',
       license='MIT',
       packages=find_packages(exclude=['tests']),
-      install_requires=['blinker'],
+      install_requires=['blinker', 'passlib'],
       classifiers=[
       ]
      )

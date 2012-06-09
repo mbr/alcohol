@@ -5,71 +5,56 @@ from binascii import hexlify, unhexlify
 import json
 import hashlib
 import os
-from struct import pack, unpack
+import struct
 import time
 
-from pbkdf2 import pbkdf2_hex
-from safe_str_cmp import safe_str_cmp
+from base64 import urlsafe_b64encode, urlsafe_b64decode
 
 
 class TokenException(Exception):
     """Base class for token exceptions."""
 
 
-class BadTokenException(TokenException):
-    """The token is broken and cannot ever be a valid token."""
-
-
-class InvalidTokenException(TokenException):
-    """The token has a valid structure, but is invalid."""
-
-
 class TokenGenerator(object):
-    """Generates tokens using pbkdf2 and a secret key. Tokens can be given
-       an expiration date after which they are no longer valid and be tied to a
-       secret key.
+    """Generates tokens using a :py:class:`~passlib.context.CryptContext` and a
+    secret key. Tokens can be given an expiration date after which they are no
+    longer valid as well.
 
-       :param secret_key: The secret key used by the application. Used to
-                          ensure that generated tokens stem from this
-                          application.
-       :param pbkdf_keylength: The length of the key to generate for use in the
-                          token. This directly affects token length.
-       :param pbkdf_iterations: The number of iterations that pbkdf runs.
-       :param pbkdf_saltlength: The length of the salt, taken from
-                          :py:func:`os.urandom`.
-       :param pbkdf_hashfunc: The hash function used. Passed on to
-                              :py:func:`~alcohol.pbkdf2.pbkdf2_hex`.
-       """
+    Note that the first handler from the context is used with its default
+    settings. Also, tokens contain no parameters of the handler other than the
+    salt - this means that changes in the context can invalidate all previously
+    issued tokens.
+
+    Hashing handlers that depend on non-fixed settings other than salt are not
+    supported and must implement the optional
+    :py:attr:`~passlib.utils.handlers.GenericHandler.checksum_size`.
+
+    Tokens generally are of the structure 'SaltExpiresHash' where 'Salt' is the
+    salt, 'Expires' a base64 encoded packed integer containing the expiry
+    timestamp (12 bytes long) and 'Hash' the resulting hash.
+
+    :param secret_key: The secret key used by the application. Used to ensure
+    that generated tokens stem from this application.
+
+    :param context: A :py:class:`passlib.context.CryptContext`.
+    """
     max_expires = 2 ** 63 - 1
     _pack_format = '!q'
-    _expires_token_length = len(hexlify(pack(_pack_format, max_expires)))
+    _expires_token_length = 12  # 8 bytes = 3 * 24 bit groups (incl. padding)
+                                # => 3*4 bytes encoded
 
-    def __init__(self,
-                 secret_key,
-                 pbkdf_keylength=40,
-                 pbkdf_iterations=1000,
-                 pbkdf_saltlength=8,
-                 pbkdf_hashfunc=None):
+    def __init__(self, secret_key, context):
         self.secret_key = secret_key
-        self.pbkdf_keylength = pbkdf_keylength
-        self.pbkdf_iterations = pbkdf_iterations
-        self.pbkdf_saltlength = pbkdf_saltlength
-        self.hashfunc = pbkdf_hashfunc
+        self.handler_class = context.handler()
 
-        self._salt_token_length = 2 * pbkdf_saltlength
-        self._key_token_length = 2 * pbkdf_keylength
-
-    def _generate_key(self, salt, expires, bound_value):
+    def _generate_hash(self, handler, expires, bound_value):
         # need to use hexlify, as not all raw byte strings are
         # json dumpable
         msg = json.dumps((expires,
                           hexlify(bound_value) if bound_value else None,
                           hexlify(self.secret_key)))
-        return pbkdf2_hex(msg,
-                          salt,
-                          self.pbkdf_iterations,
-                          self.pbkdf_keylength,
-                          self.hashfunc)
+
+        return handler._calc_checksum(msg)
 
     def generate_token(self, expires=-1, bound_value=None):
         """Generates a new token.
@@ -78,97 +63,79 @@ class TokenGenerator(object):
                         expired. Must be an integer and fit into 8 bytes.
         :param bound_value: A value tied to this token. This basically acts as
                             a second token-specific secret key.
-        :return: A hex string containing salt, expiry date and key combined
-                into one. Its length will be
-                :py:attr:`token_length` digits.
+        :return: A base64 string containing salt, expiry date and key combined
+                into one. Its length will be :py:attr:`token_length` characters
+                long.
         """
         assert(self.max_expires >= expires)
-        salt = hexlify(os.urandom(self.pbkdf_saltlength))
-        expires_packed = hexlify(pack(self._pack_format, expires))
-        key = self._generate_key(salt, expires, bound_value)
-        return salt + expires_packed + key
+        expires = int(expires)
+
+        # generate new salt
+        handler = self.handler_class(salt=None, use_defaults=True)
+
+        expires_packed = urlsafe_b64encode(
+            struct.pack(self._pack_format, expires)
+        )
+        hash = self._generate_hash(handler, expires, bound_value)
+
+        return handler.salt + expires_packed + hash
 
     @property
     def token_length(self):
         """The token length.
 
-        Contains the exact of generated tokens, in bytes. Note that tokens are
-        returned as hex strings. This is the length of the returned strings."""
-        return self._salt_token_length +\
+        Contains the exact of generated tokens, in bytes. This is the length of
+        the returned token strings."""
+        return self.handler_class.default_salt_size +\
                self._expires_token_length +\
-               self._key_token_length
+               self.handler_class.checksum_size
 
     def _unpack_token(self, token):
         if self.token_length != len(token):
-            raise BadTokenException('Token has wrong length.')
+            raise TokenException('Token has wrong length.')
 
-        salt = token[:self._salt_token_length]
-        try:
-            unhexlify(salt)  # check
+        # urlsafe_b64decode doesn't handle unicode
+        token = str(token)
 
-            expire_start = self._salt_token_length
-            expire_end = self._salt_token_length + self._expires_token_length
-            expires = unpack(self._pack_format,
-                             unhexlify(token[expire_start:expire_end]))[0]
+        salt = token[:self.handler_class.default_salt_size]
 
-            key = token[-self._key_token_length:]
-            unhexlify(key)
-        except TypeError, e:
-            raise BadTokenException(str(e))
+        expire_start = self.handler_class.default_salt_size
+        expire_end = expire_start + self._expires_token_length
 
-        return salt, expires, key
+        expire_packed = urlsafe_b64decode(token[expire_start:expire_end])
 
-    def get_expiry_time(self, token, bound_value=None):
-        """Extracts the expiration time from a token.
+        expires = struct.unpack(self._pack_format, expire_packed)[0]
 
-        :param token: The token to be examined.
-        :param bound_value: The same bound value that was used to generate the
-                            token.
-        :return: The expiration time as an integer.
-        :throw TokenException: If the token is not valid other than its
-                               expiration.
-        """
-        salt, expires, key = self._unpack_token(token)
+        hash = token[expire_end:]
 
-        real_key = self._generate_key(salt, expires, bound_value)
-        if not safe_str_cmp(real_key, key):
-            raise InvalidTokenException('Token is invalid.')
+        return salt, expires, hash
 
-        return expires
-
-    def token_not_expired(self, token, bound_value=None):
-        """Checks if a token is expired.
-
-        :param token: The token to be examined.
-        :param bound_value: The same bound value that was used to generate the
-                            token.
-        :return: True if the token is NOT expired, False if it.
-        :throw TokenException: If the token is not valid other than its
-                               expiration.
-        """
-        expiry_time = self.get_expiry_time(token, bound_value)
-
-        # a token with an expiry time of -1 does not expire
-        if -1 == expiry_time:
-            return True
-
-        if time.time() >= expiry_time:
-            return False
-
-        return True
-
-    def check_token(self, token, bound_value=None):
+    def check_token(self, token, bound_value=None, now=None):
         """Check a token for full validity.
-
-        This is the function you should be using to verify tokens, most of the
-        time.
 
         :param token: The token to be examined.
         :param bound_value: The same bound value that was used to generate the
                             token.
         :return: True if the token is valid, False if it is NOT.
         """
+
+        if not now:
+            now = int(time.time())
+
         try:
-            return self.token_not_expired(token, bound_value)
-        except TokenException:
+            salt, expires, hash = self._unpack_token(token)
+        except (ValueError, TypeError, TokenException, struct.error):
             return False
+
+        handler = self.handler_class(salt=salt, use_defaults=True)
+        correct_hash = self._generate_hash(handler, expires, bound_value)
+
+        # check if hash is correct
+        if not hash == correct_hash:
+            return False
+
+        # check if token hasn't expired
+        if -1 != expires and not now < expires:
+            return False
+
+        return True
