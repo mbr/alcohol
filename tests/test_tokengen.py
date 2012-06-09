@@ -61,10 +61,11 @@ def generate_scenarios():
         yield (i, {'hashfunc_name': i})
 
 
-class TestTokenModule(TestWithScenarios):
+class TestTokenGenerator(TestWithScenarios):
     def shortDescription(self):
         return 'scenario'
     scenarios = list(generate_scenarios())
+    generator_class = TokenGenerator
 
     def setUp(self):
         # use a realistic key - previously, json.dumps choked on non-ascii
@@ -92,8 +93,8 @@ class TestTokenModule(TestWithScenarios):
         context = CryptContext([self.hashfunc_name])
 
         # less iterations so tests run quicker
-        self.gen = TokenGenerator(secret_key, context)
-        self.evilgen = TokenGenerator(evil_key, context)
+        self.gen = self.generator_class(secret_key, context)
+        self.evilgen = self.generator_class(evil_key, context)
 
     def test_simple_token(self):
         good_token = self.gen.generate_token()
@@ -122,10 +123,6 @@ class TestTokenModule(TestWithScenarios):
 
         self.assertNotEqual(token1, token2)
 
-    def test_length_adds_up(self):
-        token = self.gen.generate_token()
-        self.assertEqual(len(token), self.gen.token_length)
-
     def test_single_invalid_byte_alter(self):
         token = self.gen.generate_token()
         self.assertTrue(self.gen.check_token(token))
@@ -149,7 +146,10 @@ class TestTokenModule(TestWithScenarios):
         self.assertFalse(self.gen.check_token(token, now = far_future))
 
     def test_length(self):
-        self.assertEqual(len(self.gen.generate_token()), self.gen.token_length)
+        self.assertLessEqual(
+            len(self.gen.generate_token()),
+            self.gen.token_max_length
+        )
 
     def test_completely_broken_values(self):
         self.assertFalse(self.gen.check_token('asoihd'))
@@ -158,3 +158,17 @@ class TestTokenModule(TestWithScenarios):
         self.assertFalse(self.gen.check_token(True))
         self.assertFalse(self.gen.check_token(None))
         self.assertFalse(self.gen.check_token('a' * 1024))
+
+
+class TestUrlsafeTokenGenerator(TestTokenGenerator):
+    generator_class = UrlsafeTokenGenerator
+
+    def test_token_is_urlsafe(self):
+        token = self.gen.generate_token()
+        self.assertRegexpMatches(token, '^[a-zA-Z0-9-_]*$')
+
+    def test_single_invalid_byte_alter(self):
+        # base64 can decode to the same value for multiple hashes
+        # self.skipTest('base64 encoding not injective')
+        # e.g. '-g==' and '-h==' decode to the same thing
+        pass

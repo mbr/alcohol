@@ -1,14 +1,26 @@
 #!/usr/bin/env python
 # coding=utf8
 
+import base64
 from binascii import hexlify, unhexlify
-import json
 import hashlib
+import json
+import math
 import os
 import struct
 import time
 
-from base64 import urlsafe_b64encode, urlsafe_b64decode
+import passlib.context
+
+
+# lifted from itsdangerous
+# https://github.com/mitsuhiko/itsdangerous/blob/master/itsdangerous.py
+def base64_encode(s):
+    return base64.urlsafe_b64encode(s).strip('=')
+
+
+def base64_decode(s):
+    return base64.urlsafe_b64decode(s + '=' * (-len(s) % 4))
 
 
 class TokenException(Exception):
@@ -40,10 +52,16 @@ class TokenGenerator(object):
     """
     max_expires = 2 ** 63 - 1
     _pack_format = '!q'
-    _expires_token_length = 12  # 8 bytes = 3 * 24 bit groups (incl. padding)
-                                # => 3*4 bytes encoded
+    _expires_token_length = len(struct.pack(_pack_format, 0))
 
-    def __init__(self, secret_key, context):
+    DEFAULT_SCHEME = 'pbkdf2_sha256'
+
+    def __init__(self, secret_key, context=None):
+        if not context:
+            context = passlib.context.CryptContext(
+                schemes=[self.DEFAULT_SCHEME]
+            )
+
         self.secret_key = secret_key
         self.handler_class = context.handler()
 
@@ -73,15 +91,13 @@ class TokenGenerator(object):
         # generate new salt
         handler = self.handler_class(salt=None, use_defaults=True)
 
-        expires_packed = urlsafe_b64encode(
-            struct.pack(self._pack_format, expires)
-        )
+        expires_packed = struct.pack(self._pack_format, expires)
         hash = self._generate_hash(handler, expires, bound_value)
 
-        return handler.salt + expires_packed + hash
+        return str(handler.salt) + expires_packed + str(hash)
 
     @property
-    def token_length(self):
+    def token_max_length(self):
         """The token length.
 
         Contains the exact of generated tokens, in bytes. This is the length of
@@ -91,10 +107,6 @@ class TokenGenerator(object):
                self.handler_class.checksum_size
 
     def _unpack_token(self, token):
-        if self.token_length != len(token):
-            raise TokenException('Token has wrong length.')
-
-        # urlsafe_b64decode doesn't handle unicode
         token = str(token)
 
         salt = token[:self.handler_class.default_salt_size]
@@ -102,7 +114,7 @@ class TokenGenerator(object):
         expire_start = self.handler_class.default_salt_size
         expire_end = expire_start + self._expires_token_length
 
-        expire_packed = urlsafe_b64decode(token[expire_start:expire_end])
+        expire_packed = token[expire_start:expire_end]
 
         expires = struct.unpack(self._pack_format, expire_packed)[0]
 
@@ -127,8 +139,13 @@ class TokenGenerator(object):
         except (ValueError, TypeError, TokenException, struct.error):
             return False
 
-        handler = self.handler_class(salt=salt, use_defaults=True)
-        correct_hash = self._generate_hash(handler, expires, bound_value)
+        try:
+            handler = self.handler_class(salt=salt, use_defaults=True)
+        except (UnicodeDecodeError, ValueError):
+            # happens when trying to decode garbage salt
+            return False
+
+        correct_hash = str(self._generate_hash(handler, expires, bound_value))
 
         # check if hash is correct
         if not hash == correct_hash:
@@ -139,3 +156,31 @@ class TokenGenerator(object):
             return False
 
         return True
+
+
+def _base64_size(n):
+    return int(math.ceil(n * 8 / 24.0)) * (24 / 6)
+
+
+class UrlsafeTokenGenerator(TokenGenerator):
+    @property
+    def token_max_length(self):
+        return _base64_size(
+            super(UrlsafeTokenGenerator, self).token_max_length
+        )
+
+    def generate_token(self, *args, **kwargs):
+        t = super(UrlsafeTokenGenerator, self).generate_token(
+            *args, **kwargs
+        )
+        return base64_encode(t)
+
+    def check_token(self, token, *args, **kwargs):
+        try:
+            raw_token = base64_decode(str(token))
+        except TypeError:
+            return False
+
+        return super(UrlsafeTokenGenerator, self).check_token(
+            raw_token, *args, **kwargs
+        )
