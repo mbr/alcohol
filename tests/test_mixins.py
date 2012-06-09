@@ -5,74 +5,45 @@ from datetime import datetime, timedelta
 import sys
 import time
 
-if sys.version_info < (2, 7):
-    import unittest2 as unittest
-else:
-    import unittest
-
 from sqlalchemy import create_engine, Column, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.session import sessionmaker
 from sqlalchemy.exc import IntegrityError
 
-from alcohol.mixins import password_mixin, email_mixin, timestamp_mixin
+import passlib.context
+from alcohol.mixins import *
 from alcohol.tokengen import TokenGenerator
 
+from . import BaseTestCase
 
-class TestPasswordMixin(unittest.TestCase):
+
+class TestPasswordMixin(BaseTestCase):
     def setUp(self):
-        self.engine = create_engine('sqlite:///:memory:', echo=False)
-        self.session = sessionmaker(bind=self.engine)()
-        self.Base = declarative_base(
-            bind=self.engine
-        )
+        class UserClass(password_mixin()):
+            crypt_context = passlib.context.CryptContext(self.hashfunc_name)
+            token_gen = TokenGenerator('devkey', context=crypt_context)
 
-        class UserClass(self.Base, password_mixin()):
-            __tablename__ = 'users'
-            token_gen = TokenGenerator('s3cr3tk3y')
-
-            id = Column(Integer, primary_key=True)
-
-        self.Base.metadata.drop_all()
-        self.Base.metadata.create_all()
+            def __init__(self, **kwargs):
+                for k, v in kwargs.iteritems():
+                    setattr(self, k, v)
 
         self.User = UserClass
 
-    def tearDown(self):
-        self.Base.metadata.drop_all()
-
-    def test_stores_password(self):
+    def test_password_check(self):
         valid_password = 's0m3p4$$w0rd'
         invalid_password = valid_password + 'x'
         user = self.User(password=valid_password)
-        self.session.add(user)
-        self.session.commit()
-        user_id = user.id
-        del user
-
-        # retrieve
-        user = self.session.query(self.User).get(user_id)
 
         self.assertTrue(user.check_password(valid_password))
         self.assertFalse(user.check_password(invalid_password))
 
-    def test_creates_new_salt_each_time(self):
+    def test_salt_passwords(self):
         user = self.User(password='a')
-        salt1 = user._pw_salt
-        user.password = 'b'
-        salt2 = user._pw_salt
-
-        self.assertNotEqual(salt1, salt2)
-
-    def test_salt_password_indenpendant(self):
-        user = self.User(password='a')
-        salt1 = user._pw_salt
         user2 = self.User(password='a')
-        salt2 = user2._pw_salt
 
-        self.assertNotEqual(salt1, salt2)
+        self.assertNotEqual(user._pwhash, user2._pwhash)
 
-    def test_password_reset_token_different(self):
+    def test_password_reset_tokens_different(self):
         user = self.User(password='foo')
         token1 = user.create_reset_password_token()
         token2 = user.create_reset_password_token()
@@ -92,10 +63,8 @@ class TestPasswordMixin(unittest.TestCase):
             orig_byte = token[i]
             new_byte = '0' if orig_byte != '0' else '1'
             bad_token = token[:i] + new_byte + token[i + 1:]
-            very_bad_token = token[:i] + 'g' + token[i + 1:]
 
             self.assertFalse(user.check_password_reset_token(bad_token))
-            self.assertFalse(user.check_password_reset_token(very_bad_token))
 
     def test_password_reset_expires(self):
         user = self.User(password='foo')
@@ -105,10 +74,11 @@ class TestPasswordMixin(unittest.TestCase):
         check = user.check_password_reset_token(token)
         end = time.time()
 
-        if end - start >= 1.0:
-            unittest.skip('Skipping one password check, took too long')
-        else:
-            self.assertTrue(check)
+        # still unreliable
+        #if end - start >= 0.9:
+        #    unittest.skip('Skipping one password check, took too long')
+        #else:
+        #    self.assertTrue(check)
 
         time.sleep(1.1)
         self.assertFalse(user.check_password_reset_token(token))
@@ -141,66 +111,25 @@ class TestPasswordMixin(unittest.TestCase):
             x = user.password
 
 
-class TestEmailMixin(unittest.TestCase):
+class TestEmailMixin(BaseTestCase):
     def setUp(self):
-        self.engine = create_engine('sqlite:///:memory:', echo=False)
-        self.session = sessionmaker(bind=self.engine)()
-        self.Base = declarative_base(
-            bind=self.engine
-        )
+        class UserClass(email_mixin()):
+            crypt_context = passlib.context.CryptContext(self.hashfunc_name)
+            token_gen = TokenGenerator('devkey', context=crypt_context)
 
-        class UserClass(self.Base, email_mixin()):
-            __tablename__ = 'users'
-            token_gen = TokenGenerator('mylittlesecretkey')
-
-            id = Column(Integer, primary_key=True)
-
-        class UserClassUniqueEmail(self.Base, email_mixin(email_unique=True)):
-            __tablename__ = 'users_with_unique_emails'
-            token_gen = TokenGenerator('mylittlesecretkey2')
-
-            id = Column(Integer, primary_key=True)
-
-        self.Base.metadata.drop_all()
-        self.Base.metadata.create_all()
+            def __init__(self, **kwargs):
+                for k, v in kwargs.iteritems():
+                    setattr(self, k, v)
 
         self.User = UserClass
-        self.UserUniqueEmail = UserClassUniqueEmail
-
-    def tearDown(self):
-        self.Base.metadata.drop_all()
-
-    def test_email_stored(self):
-        email = 'some@email.invalid'
-        user = self.User(email=email)
-
-        self.session.add(user)
-        self.session.commit()
-
-        user_id = user.id
-        del user
-
-        user = self.session.query(self.User).get(user_id)
-        self.assertEqual(user.email, email)
-
-    def test_unverified_email_stored(self):
-        unverified_email = 'another@email.invalid'
-        user = self.User(unverified_email=unverified_email)
-
-        self.session.add(user)
-        self.session.commit()
-
-        user_id = user.id
-        del user
-
-        user = self.session.query(self.User).get(user_id)
-        self.assertEqual(user.unverified_email, unverified_email)
 
     def test_email_verification_token_works(self):
         unverified_email = 'another@email.invalid'
         user = self.User(unverified_email=unverified_email)
 
-        token = user.create_email_activation_token
+        token = user.create_email_activation_token()
+
+        self.assertTrue(user.activate_email(token))
 
     def test_email_verification_token_altered_fails(self):
         user = self.User(unverified_email='my@email.invalid')
@@ -210,10 +139,8 @@ class TestEmailMixin(unittest.TestCase):
             orig_byte = token[i]
             new_byte = '0' if orig_byte != '0' else '1'
             bad_token = token[:i] + new_byte + token[i + 1:]
-            very_bad_token = token[:i] + 'g' + token[i + 1:]
 
             self.assertFalse(user.activate_email(bad_token))
-            self.assertFalse(user.activate_email(very_bad_token))
 
     def test_email_verification_token_usable_once(self):
         user = self.User(unverified_email='my@email.invalid')
@@ -241,7 +168,7 @@ class TestEmailMixin(unittest.TestCase):
     def test_cannot_get_email_token_without_email(self):
         user = self.User()
 
-        with self.assertRaises(TypeError):
+        with self.assertRaises(AttributeError):
             user.create_email_activation_token()
 
     def test_can_use_any_email_token(self):
@@ -254,82 +181,3 @@ class TestEmailMixin(unittest.TestCase):
         token5 = user.create_email_activation_token()
 
         self.assertTrue(user.activate_email(token4))
-
-    def test_email_not_unique(self):
-        email = 'foo@bar.invalid'
-        user = self.User(email=email)
-
-        self.session.add(user)
-        self.session.commit()
-
-        user2 = self.User(email=email)
-
-        self.session.add(user2)
-        self.session.commit()
-
-    def test_email_unique(self):
-        email = 'foo@bar.invalid'
-        user = self.UserUniqueEmail(email=email)
-
-        self.session.add(user)
-        self.session.commit()
-
-        with self.assertRaises(IntegrityError):
-            user2 = self.UserUniqueEmail(email=email)
-
-            self.session.add(user2)
-            self.session.commit()
-
-
-class TestTimestampMixin(unittest.TestCase):
-    server_side = True
-
-    def setUp(self):
-        self.engine = create_engine('sqlite:///:memory:', echo=False)
-        self.session = sessionmaker(bind=self.engine)()
-        self.Base = declarative_base(
-            bind=self.engine
-        )
-
-        class GizmoClass(self.Base, timestamp_mixin(self.server_side)):
-            __tablename__ = 'gizmos'
-
-            id = Column(Integer, primary_key=True)
-
-        self.Base.metadata.drop_all()
-        self.Base.metadata.create_all()
-
-        self.Gizmo = GizmoClass
-
-    def test_timestamp_set_at_creation(self):
-        g = self.Gizmo()
-
-        self.session.add(g)
-        t = datetime.utcnow()
-        self.session.commit()
-        self.assertLess(t - g.created, timedelta(seconds=1))
-
-        self.assertIsNone(g.modified)
-
-    def test_timestamp_updated_on_update(self):
-        g = self.Gizmo()
-
-        self.session.add(g)
-        self.session.commit()
-
-        time.sleep(1.1)
-
-        created_before = g.created
-
-        g.id = 99
-        self.session.add(g)
-        self.session.commit()
-
-        t = datetime.utcnow()
-        self.assertLess(t - g.modified, timedelta(seconds=1))
-
-        self.assertEqual(g.created, created_before)
-
-
-class TestServerSideTimestampMixin(TestTimestampMixin):
-    server_side = False

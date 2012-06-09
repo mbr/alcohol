@@ -15,7 +15,7 @@ setup(name='alcohol',
       description='User login signal framework, also includes pbkdf2, token '\
       'generation and SQLAlchemy user mixins.',
       long_description=read('README.rst'),
-      keywords='user,users,login,pbkdf2,sqlalchemy,tokens',
+      keywords='user,users,login,pbkdf2,sqlalchemy,tokens,passlib,email',
       author='Marc Brinkmann',
       author_email='git@marcbrinkmann.de',
       url='http://github.com/mbr/',
