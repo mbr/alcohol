@@ -11,7 +11,8 @@ from alcohol.tokengen import *
 import passlib.hash
 
 def generate_scenarios():
-    schemes = ['des_crypt', 'bsdi_crypt', 'bigcrypt', 'crypt16',  # archaic
+    possible_schemes =\
+              ['des_crypt', 'bsdi_crypt', 'bigcrypt', 'crypt16',  # archaic
                'md5_crypt', 'bcrypt', 'sha1_crypt', 'sun_md5_crypt',
                'sha256_crypt', 'sha512_crypt',                    # unix
                'apr_md5_crypt', 'phpass', 'pbkdf2_sha1',
@@ -41,10 +42,14 @@ def generate_scenarios():
         'des_crypt', 'django_des_crypt',
         'bsdi_crypt',
         'crypt16',
-        'bigcrypt'
+        'bigcrypt',
+        'bcrypt' # not recommended - uses only the first 72 bytes of pw
     ])
 
-    # FIXME: currently fails for bcrypt, which is bad
+    # stick to these, as they are tested
+    schemes = ['pbkdf2_sha1', 'pbkdf2_sha256', 'pbkdf2_sha512', 'sha1_crypt',
+               'sha256_crypt', 'sha512_crypt']
+
     for i in schemes:
         if i in blacklist:
             continue
@@ -55,9 +60,6 @@ def generate_scenarios():
             continue
         yield (i, {'hashfunc_name': i})
 
-
-# missing tests:
-# 2. secret key fuzzing?
 
 class TestTokenModule(TestWithScenarios):
     def shortDescription(self):
