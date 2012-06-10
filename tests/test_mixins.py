@@ -4,6 +4,7 @@
 from datetime import datetime, timedelta
 import sys
 import time
+import unittest
 
 from sqlalchemy import create_engine, Column, Integer
 from sqlalchemy.ext.declarative import declarative_base
@@ -12,6 +13,7 @@ from sqlalchemy.exc import IntegrityError
 
 import passlib.context
 from alcohol.mixins import *
+from alcohol.mixins.sqlalchemy import *
 from alcohol.tokengen import TokenGenerator
 
 from . import BaseTestCase
@@ -181,3 +183,94 @@ class TestEmailMixin(BaseTestCase):
         token5 = user.create_email_activation_token()
 
         self.assertTrue(user.activate_email(token4))
+
+
+class TestSqlAlchemyPasswordMixin(TestPasswordMixin):
+    def setUp(self):
+        self.engine = create_engine('sqlite:///:memory:', echo=False)
+        self.session = sessionmaker(bind=self.engine)()
+        self.Base = declarative_base(bind=self.engine)
+
+        class UserClass(self.Base, sqlalchemy_password_mixin()):
+            __tablename__ = 'users'
+
+            id = Column(Integer(), primary_key=True)
+
+            crypt_context = passlib.context.CryptContext(self.hashfunc_name)
+            token_gen = TokenGenerator('devkey', context=crypt_context)
+
+        self.Base.metadata.drop_all()
+        self.Base.metadata.create_all()
+
+        self.User = UserClass
+
+    def test_stores_password(self):
+        valid_password = 's0m3p4$$w0rd'
+        invalid_password = valid_password + 'x'
+
+        user = self.User(password=valid_password)
+        self.session.add(user)
+        self.session.commit()
+        user_id = user.id
+        del user
+
+        # retrieve
+        user = self.session.query(self.User).get(user_id)
+
+        self.assertTrue(user.check_password(valid_password))
+        self.assertFalse(user.check_password(invalid_password))
+
+
+class TestTimestampMixin(unittest.TestCase):
+    server_side = True
+
+    def setUp(self):
+        self.engine = create_engine('sqlite:///:memory:', echo=False)
+        self.session = sessionmaker(bind=self.engine)()
+        self.Base = declarative_base(
+            bind=self.engine
+        )
+
+        class GizmoClass(self.Base,
+                         sqlalchemy_timestamp_mixin(self.server_side)):
+            __tablename__ = 'gizmos'
+
+            id = Column(Integer, primary_key=True)
+
+        self.Base.metadata.drop_all()
+        self.Base.metadata.create_all()
+
+        self.Gizmo = GizmoClass
+
+    def test_timestamp_set_at_creation(self):
+        g = self.Gizmo()
+
+        self.session.add(g)
+        t = datetime.utcnow()
+        self.session.commit()
+        self.assertLess(t - g.created, timedelta(seconds=1))
+
+        self.assertIsNone(g.modified)
+
+    def test_timestamp_updated_on_update(self):
+        g = self.Gizmo()
+
+        self.session.add(g)
+        self.session.commit()
+
+        time.sleep(1.1)
+
+        created_before = g.created
+
+        g.id = 99
+        self.session.add(g)
+        self.session.commit()
+
+        t = datetime.utcnow()
+        self.assertLess(t - g.modified, timedelta(seconds=1))
+
+        self.assertEqual(g.created, created_before)
+
+
+class TestServerSideTimestampMixin(TestTimestampMixin):
+    server_side = False
