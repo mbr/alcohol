@@ -6,8 +6,6 @@ import hashlib
 import os
 import time
 
-from sqlalchemy import Column, String, DateTime, func
-
 from alcohol.tokengen import TokenGenerator
 
 
