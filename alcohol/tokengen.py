@@ -38,7 +38,7 @@ class TokenGenerator(object):
     issued tokens.
 
     Hashing handlers that depend on non-fixed settings other than salt are not
-    supported and must implement the optional
+    supported. Also, handlers must implement the optional
     :py:attr:`~passlib.utils.handlers.GenericHandler.checksum_size`.
 
     Tokens generally are of the structure 'SaltExpiresHash' where 'Salt' is the
@@ -63,7 +63,14 @@ class TokenGenerator(object):
             )
 
         self.secret_key = secret_key
-        self.handler_class = context.handler()
+        self.context = context
+
+    def _get_handler(self, settings):
+        rec = self.context._get_record(None, None)
+
+        rec._prepare_settings(settings)
+
+        return rec.handler(use_defaults=True, **settings)
 
     def _generate_hash(self, handler, expires, bound_value):
         # need to use hexlify, as not all raw byte strings are
@@ -89,7 +96,7 @@ class TokenGenerator(object):
         expires = int(expires)
 
         # generate new salt
-        handler = self.handler_class(salt=None, use_defaults=True)
+        handler = self._get_handler({})
 
         expires_packed = struct.pack(self._pack_format, expires)
         hash = self._generate_hash(handler, expires, bound_value)
@@ -102,16 +109,18 @@ class TokenGenerator(object):
 
         Contains the exact of generated tokens, in bytes. This is the length of
         the returned token strings."""
-        return self.handler_class.default_salt_size +\
+        handler = self._get_handler({})
+        return handler.default_salt_size +\
                self._expires_token_length +\
-               self.handler_class.checksum_size
+               handler.checksum_size
 
     def _unpack_token(self, token):
         token = str(token)
+        handler = self._get_handler({})
 
-        salt = token[:self.handler_class.default_salt_size]
+        salt = token[:handler.default_salt_size]
 
-        expire_start = self.handler_class.default_salt_size
+        expire_start = handler.default_salt_size
         expire_end = expire_start + self._expires_token_length
 
         expire_packed = token[expire_start:expire_end]
@@ -140,7 +149,7 @@ class TokenGenerator(object):
             return False
 
         try:
-            handler = self.handler_class(salt=salt, use_defaults=True)
+            handler = self._get_handler({'salt': salt})
         except (UnicodeDecodeError, ValueError):
             # happens when trying to decode garbage salt
             return False
