@@ -172,6 +172,13 @@ def _base64_size(n):
 
 
 class UrlsafeTokenGenerator(TokenGenerator):
+    """UrlsafeTokenGenerator outputs tokens that contain only url-safe
+    characters, that is ``A-Z``, ``a-z``, ``0-9``, ``_`` and ``-``.
+
+    The generated tokens are slightly longer that those of
+    :py:class:`TokenGenerator` with the same settings, as they are
+    base64-encoded.
+    """
     @property
     def token_max_length(self):
         return _base64_size(

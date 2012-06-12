@@ -1,5 +1,5 @@
-SQLAlchemy mixin classes
-========================
+Mixin classes
+=============
 Built on top of :py:mod:`alcohol.tokengen`, a few mixin classes are available
 providing functionality commonly needed when handling users.
 
@@ -8,9 +8,8 @@ providing functionality commonly needed when handling users.
 
 .. py:class:: alcohol.mixins.PasswordMixin
 
-   A mixin that stores a key based on a password. This will add two fields to
-   any class mixed in, `_pw_key` containing the key and `_pw_salt` containing
-   the salt.
+   A mixin that stores a key based on a password. An attribute named `_pwhash`
+   will be used to store the password hash.
 
    Note that this class cannot be instantiated directly, instead call
    :py:func:`password_mixin` first to get an instance of the class object first
@@ -46,9 +45,8 @@ providing functionality commonly needed when handling users.
 
 .. py:class:: alcohol.mixins.EmailMixin
 
-   A mixin that adds a field `email` to your model and supports the generation
-   of tokens to activate the user supplied address. For this, a field
-   `unverified_email` is also added.
+   A mixin that uses the attributes `email` and `unverified_email`  and
+   supports the generation of tokens to activate the user supplied address.
 
    When changing a users email address, set it to `unverified_email`, create an
    activation token, mail it to the user and have him enter it back. After
@@ -88,7 +86,23 @@ providing functionality commonly needed when handling users.
       :param valid_for: How long the token should be valid.
       :return: A new email activation token (as a string).
 
-.. py:class:: alcohol.mixins.TimestampMixin
+
+Specialized mixins
+------------------
+
+There are two submodules available, one for `SQLAlchemy
+<http://sqlalchemy.org>`_ and one for `Google App Engine ndb
+<https://developers.google.com/appengine/docs/python/ndb/>`_. These can be
+mixed in, saving you the trouble of defining the colums/fields on the model
+objects manually.
+
+.. automodule:: alcohol.mixins.sqlalchemy
+   :members:
+
+.. automodule:: alcohol.mixins.gaendb
+   :members:
+
+.. py:class:: alcohol.mixins.sqlalchemy.TimestampMixin
 
    A mixin that adds two timestamp fields, `created` and `modified`. The
    `created` timestamp is updated only on creation, while every SQL UPDATE will
