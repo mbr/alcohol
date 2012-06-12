@@ -8,6 +8,11 @@ from . import password_mixin
 
 
 def sqlalchemy_password_mixin(max_hash_size=500, **kwargs):
+    """Creates a password mixin that contains SQLAlchemy columns.
+
+    :param max_hash_size: The maximum size of the hash expected to be generated
+                          by the default scheme in the crypt context. This will
+                          be used as the size for the `_pwhash` column."""
     MixinBase = password_mixin(**kwargs)
 
     class SqlAlchemyPasswordMixin(MixinBase):
@@ -17,6 +22,10 @@ def sqlalchemy_password_mixin(max_hash_size=500, **kwargs):
 
 
 def sqlalchemy_email_mixin(max_email_length=1024, **kwargs):
+    """Creates an email mixin containing SQLAlchemy columns.
+
+    :param max_email_length: The column size for the generated `email` and
+                             `unverified_email` columns."""
     MixinBase = email_mixin(**kwargs)
 
     class SqlAlchemyEmailMixin(MixinBase):

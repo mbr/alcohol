@@ -99,9 +99,6 @@ objects manually.
 .. automodule:: alcohol.mixins.sqlalchemy
    :members:
 
-.. automodule:: alcohol.mixins.gaendb
-   :members:
-
 .. py:class:: alcohol.mixins.sqlalchemy.TimestampMixin
 
    A mixin that adds two timestamp fields, `created` and `modified`. The
@@ -121,3 +118,25 @@ objects manually.
 
       A :py:class:`datetime.datetime` instance containing the time this record
       was last modified.
+
+.. py:mod:: alcohol.mixins.gaendb
+
+   A module similiar to :py:mod:`alcohol.mixins.sqlalchemy`, requires app
+   engine.
+
+.. py:class:: alcohol.mixins.gaendb.ndb_password_mixin(indexed_hashes,\
+   **kwargs)
+
+   Google app engine ndb mixin.
+
+   :param indexed_hashes: Whether or not to use indexed attributes.
+
+   Other parameters are passed through to
+   :py:func:`~alcohol.mixins.password_mixin`.
+
+.. py:class:: alcohol.mixins.gaendb.ndb_email_mixin(**kwargs)
+
+    Google app engine email mixin.
+
+   Other parameters are passed through to
+   :py:func:`~alcohol.mixins.email_mixin`.
