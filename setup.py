@@ -2,9 +2,9 @@
 # coding=utf8
 
 import os
-import sys
 
 from setuptools import setup, find_packages
+
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
@@ -12,16 +12,12 @@ def read(fname):
 
 setup(name='alcohol',
       version='0.3dev',
-      description='User login signal framework, also includes pbkdf2, token '\
-      'generation and SQLAlchemy user mixins.',
+      description='Handles user authentication, in a way.',
       long_description=read('README.rst'),
-      keywords='user users login pbkdf2 sqlalchemy tokens passlib email ndb',
       author='Marc Brinkmann',
       author_email='git@marcbrinkmann.de',
-      url='http://github.com/mbr/',
+      url='http://github.com/mbr/alcohol',
       license='MIT',
       packages=find_packages(exclude=['tests']),
       install_requires=['blinker', 'passlib'],
-      classifiers=[
-      ]
-     )
+)
