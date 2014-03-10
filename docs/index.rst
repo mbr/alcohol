@@ -1,121 +1,55 @@
 alcohol
-=============
+=======
 alcohol is a micro-framework for handling user identification and
-authorization. It has a flexible architecture that allows you to easily write
-custom handlers for any kind of authentication method you need to come up with.
-
-The flow of the library components revolves heavily around a signal named
-:data:`~alcohol.user_id_changed`.
-
-1. Any time a handler processes some sort of request, if a valid login, is
-   found, it sends the :data:`~alcohol.user_id_changed` signal.
-2. Any number of processors can bind to the
-   :data:`~alcohol.user_id_changed` signal and perform actions
-   upon receiving it. Two of the most common examples are storing the currently
-   logged in user on the application's thread locals and storing the user id in
-   some sort of persistance layer.
+authorization. Both of these parts can be used indenpendently from each other
+and consist of well-defined interfaces and some convenient implementations
+for these.
 
 
-Terminology
------------
-A couple of terms are used in a precise fashion within alcohol.
+Authentication
+--------------
 
-User-ID
-~~~~~~~
-Every user must have an internal unique id that can be represented as a
-string. If they are not strings, a serialization scheme should be used to
-convert them to binary (not unicode) string values and back.
+`Authentication <https://en.wikipedia.org/wiki/Authentication>`_ is the act
+of confirming that a user (or another actor in your system) is who he/she/it
+says. A very common method to authenticate users, for example,is to ask them
+for a password - if they know the correct password, the system assumes their
+identity is accurate.
 
-While a user can have multiple means of identification (for example, he might
-be able to login with his email as well as any number of OpenID accounts),
-the User-ID must be unique, should never change and never be reused for another
-user.
-
-User
-~~~~
-A User is any kind of value, for an example an instance of a ``User``-class
-that is identified by the User-ID. alcohol imposes no restriction on what
-can be a User instance and in general handles User-IDs instead.
+alcohol is not tied to a specific way of authenticating users (like
+passwords) and can support many different kinds. You can read  more about
+its authentication capabilities in the :ref:`authentication`-section.
 
 
-The ``user_id_changed`` signal
-------------------------------
-The :data:`~alcohol.user_id_changed` signal is at the core of
-alcohol and communicates all information about user logins:
+Authorization
+-------------
 
-.. data:: alcohol.user_id_changed
+`Authorization <https://en.wikipedia.org/wiki/Authorization>`_ most often
+happens after a user is already authenticated and describes the process of
+controlling access, i.e. deciding what a user is actually allowed to do.
 
-          Sent when any handler has found a valid User-ID. Arguments are
-          :data:`user_id_changed(sender, user_id, **kwargs)`
+To do this, alcohol uses `Role-based access control <https://en.wikipedia
+.org/wiki/Role-based_access_control>`_, specifically an interface modeled
+after the standardized `NIST RBAC model <https://en.wikipedia
+.org/wiki/NIST_RBAC_model>`_ (the related paper can be found at [1]_).
 
-          :param sender: The sender that sent the siganl.
-                      This allows using :meth:`blinker.base.Signal.connect_via`
-                      to bind to a specific sender.
+This is described in-depth in the :ref:`authorization`-section.
 
-          :param user_id: The (canonical) string representation of the User-ID
-                          that should now be active.
-
-          :param **kwargs: Any number of extra options. Every receiver must
-                           accept keyword arguments, even if he does not handle
-                           any.  These are used to add additional information
-                           about the nature of the id change.
+.. [1] http://csrc.nist.gov/rbac/sandhu-ferraiolo-kuhn-00.pdf
 
 
-Signal options
-~~~~~~~~~~~~~~
-While a sender is free to add any number of options to the
-``kwargs``-parameter, a few standard option names (that need not be present)
-are reserved:
+Table of contents
+-----------------
 
-- **restored**: Set to `True`, if the User-ID changed not due to a login or
-  "active" action by the user, but rather was restored from
-  some persistance layer. A typical example is the loading of a
-  User-ID from a cookie in a web application.
-- **expire_on**: If present, the user requested that his login be limited. A
-  value equivalent to an integer 0 means do not persist permanently
-  (i.e. persistance should be limited in a manner similiar to a session
-  cookie), otherwise this value should be a :py:class:`~datetime.datetime`
-  object set to when the login should expire.
+While high level interfaces are described in the relevant sections,
+alcohol also contains a few extras and ready-to-use implementations for some
+common cases.
 
-
-The ``user_id_reset`` signal
-----------------------------
-Emitted when something that is similiar to a "logout" occured, the
-:data:`~alcohol.user_id_reset` signal tells other components that from now on,
-the ``user_id`` should be considered ``None``.
-
-.. data:: alcohol.user_id_reset
-
-          Sent when a handler has determined that the global User-ID should be
-          reset to ``None``.
-
-          :param sender: The sender.
-          :param **kwargs: Extra options, as in :data:`~alcohol.user_id_changed`.
-                           Currently, none are known.
-
-
-Extras
-======
-Alcohol bundles a number of small extras that are related to the task of
-managing user credentials. None of these pull in extra dependencies, so to use
-them, you may have to install additional packages, as noted in the module
-documentation.
 
 .. toctree::
 
+   authentication
+   authorization
+   extras
    tokengen
    mixins
-
-
-API Changes
-===========
-0.3
----
-* The `expires` parameter on :py:attr:`~alcohol.user_id_changed` has been
-  replaced with an `expire_on` parameter.
-* The :py:mod:`~alcohol.tokengen` has had API changes, which are only
-  relevant if you used it with non-default settings.
-* The :py:mod:`~alcohol.mixins` modules has seen a thorough refactoring,
-  causing its API to change.
-* The formerly availble `pbkdf2` and `safe_str_cmp` modules have disappeared,
-  in favor of :py:mod:`passlib.utils`.
+   changes
