@@ -11,7 +11,7 @@ def read(fname):
 
 
 setup(name='alcohol',
-      version='0.3dev',
+      version='0.4.0dev1',
       description='Handles user authentication, in a way.',
       long_description=read('README.rst'),
       author='Marc Brinkmann',
