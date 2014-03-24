@@ -1,6 +1,10 @@
 API Changes
 ===========
 
+0.4
+---
+* The :ref:`authorization` module has been added.
+
 0.3
 ---
 * The `expires` parameter on :py:attr:`~alcohol.user_id_changed` has been
