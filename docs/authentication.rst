@@ -48,16 +48,16 @@ alcohol and communicates all information about user logins:
           :data:`user_id_changed(sender, user_id, **kwargs)`
 
           :param sender: The sender that sent the siganl.
-                          This allows using :meth:`blinker.base.Signal.connect_via`
-                      to bind to a specific sender.
+                         This allows using :meth:`blinker.base.Signal.connect_via`
+                         to bind to a specific sender.
 
           :param user_id: The (canonical) string representation of the User-ID
-                              that should now be active.
+                          that should now be active.
 
-              :param **kwargs: Any number of extra options. Every receiver must
-                               accept keyword arguments, even if he does not handle
-                               any.  These are used to add additional information
-                               about the nature of the id change.
+          :param kwargs: Any number of extra options. Every receiver must
+                         accept keyword arguments, even if he does not handle
+                         any.  These are used to add additional information
+                         about the nature of the id change.
 
 
 Signal options
@@ -89,6 +89,6 @@ the ``user_id`` should be considered ``None``.
           reset to ``None``.
 
           :param sender: The sender.
-              :param **kwargs: Extra options, as in :data:`~alcohol.user_id_changed`.
-                           Currently, none are known.
+          :param kwargs: Extra options, as in :data:`~alcohol.user_id_changed`.
+                         Currently, none are known.
 

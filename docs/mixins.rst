@@ -119,9 +119,9 @@ objects manually.
       A :py:class:`datetime.datetime` instance containing the time this record
       was last modified.
 
-.. py:mod:: alcohol.mixins.gaendb
+.. :module:: alcohol.mixins.gaendb
 
-   A module similiar to :py:mod:`alcohol.mixins.sqlalchemy`, requires app
+   A module similiar to :module:`alcohol.mixins.sqlalchemy`, requires app
    engine.
 
 .. py:class:: alcohol.mixins.gaendb.ndb_password_mixin(indexed_hashes,\
