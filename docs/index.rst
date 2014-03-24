@@ -11,7 +11,7 @@ Authentication
 
 `Authentication <https://en.wikipedia.org/wiki/Authentication>`_ is the act
 of confirming that a user (or another actor in your system) is who he/she/it
-says. A very common method to authenticate users, for example,is to ask them
+says. A very common method to authenticate users, for example, is to ask them
 for a password - if they know the correct password, the system assumes their
 identity is accurate.
 
