@@ -9,6 +9,10 @@ for these.
 Authentication
 --------------
 
+.. warning:: The authentication part of alcohol is still under development and
+             its API may undergo even conceptual changes in the future. This
+             does not apply for the authorization module.
+
 `Authentication <https://en.wikipedia.org/wiki/Authentication>`_ is the act
 of confirming that a user (or another actor in your system) is who he/she/it
 says. A very common method to authenticate users, for example, is to ask them
