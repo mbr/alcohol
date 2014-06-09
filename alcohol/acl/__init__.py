@@ -1,5 +1,6 @@
 class FlatRBAC(object):
-    """Basic interface for the simplest possible role-based access control implementation."""
+    """Basic interface for the simplest possible role-based access control
+    implementation."""
 
     # user:role
     def assign(self, user, role):
