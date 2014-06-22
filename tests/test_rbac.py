@@ -7,7 +7,8 @@ def flat_acl():
     return DictRBAC()
 
 
-hashables = 'val', 0, -1, -2, 1234, '+@#$@', ('some', 'tuple', 'val'), True, False, None
+hashables = ('val', 0, -1, -2, 1234, '+@#$@', ('some', 'tuple', 'val'), True,
+             False, None)
 alt_vals = 'val2', '0'
 
 
