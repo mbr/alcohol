@@ -23,7 +23,7 @@ All models have in common that they use the following entities:
 
 At the API level, alcohol makes no assumptions about any of these objects,
 although implementations may impose restrictions. For example, the
-:class:`~alcohol.acl.DictRBAC` implementation requires users,
+:class:`~alcohol.rbac.DictRBAC` implementation requires users,
 roles and permissions to be hashable.
 
 
@@ -42,10 +42,10 @@ In flat RBAC, five "functional capabilities" are required [2]_:
 A Flat RBAC example
 ~~~~~~~~~~~~~~~~~~~
 
-The basic `Flat RBAC`_-API is found in :class:`~alcohol.acl.FlatRBAC`. Here
+The basic `Flat RBAC`_-API is found in :class:`~alcohol.rbac.FlatRBAC`. Here
 is an example::
 
-  >>> from alcohol.acl import DictRBAC
+  >>> from alcohol.rbac import DictRBAC
   >>> acl = DictRBAC()
   >>> acl.assign('bob', 'programmer')
   >>> acl.assign('alice', 'ceo')

@@ -1,5 +1,5 @@
 import pytest
-from alcohol.acl import DictRBAC
+from alcohol.rbac import DictRBAC
 
 
 @pytest.fixture
@@ -93,8 +93,8 @@ def test_revoking(flat_acl, role_x, perm_p):
 def test_no_default_permissions(flat_acl, role_x, perm_p, perm_q):
     assert not flat_acl.allows(role_x, perm_p)
     assert not flat_acl.allows(role_x, perm_q)
-    
-    
+
+
 def test_permissions_are_per_role_xnd_permission(flat_acl, role_x, role_y, perm_p, perm_q):
     flat_acl.permit(role_x, perm_p)
     flat_acl.permit(role_y, perm_q)
