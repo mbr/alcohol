@@ -73,7 +73,6 @@ def test_unassigning_does_not_erase_all(flat_acl, user_a, role_x, role_y):
     assert role_y in flat_acl.get_assigned_roles(user_a)
 
 
-
 def test_user_starts_with_no_roles(flat_acl, user_a):
     assert not flat_acl.get_assigned_roles(user_a)
 
@@ -96,7 +95,9 @@ def test_no_default_permissions(flat_acl, role_x, perm_p, perm_q):
     assert not flat_acl.allows(role_x, perm_q)
 
 
-def test_permissions_are_per_role_xnd_permission(flat_acl, role_x, role_y, perm_p, perm_q):
+def test_permissions_are_per_role_xnd_permission(
+    flat_acl, role_x, role_y, perm_p, perm_q
+):
     flat_acl.permit(role_x, perm_p)
     flat_acl.permit(role_y, perm_q)
 
