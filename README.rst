@@ -1,3 +1,6 @@
+.. image:: https://travis-ci.org/mbr/alcohol.svg?branch=master
+           :target: https://travis-ci.org/mbr/alcohol
+
 alcohol is a micro-framework for handling user
 `authentication <https://en.wikipedia.org/wiki/Authentication>`_ and
 `authorization <https://en.wikipedia.org/wiki/Authorization>`_. Both of
