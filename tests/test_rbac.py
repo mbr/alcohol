@@ -1,6 +1,10 @@
-import pytest
-from alcohol.rbac import DictRBAC
+from sqlalchemy import create_engine, Column, Integer
+from sqlalchemy.ext.declarative import declarative_base
 
+from alcohol.rbac import DictRBAC
+from alcohol.rbac.sqlalchemy import SQLAlchemyRBAC
+
+import pytest
 
 hashables = ('val', 0, -1, -2, 1234, '+@#$@', ('some', 'tuple', 'val'), True,
              False, None)
@@ -102,3 +106,54 @@ class TestDictRbac(FlatAclTests):
     @pytest.fixture(params=alt_vals)
     def perm_q(self, request):
         return request.param
+
+
+class TestSqlaRbac(FlatAclTests):
+    @pytest.fixture
+    def flat_acl(self):
+        Base = declarative_base()
+        self.engine = create_engine('sqlite:///:memory:', echo=True)
+
+        class User(Base):
+            __tablename__ = 'users'
+            id = Column(Integer, primary_key=True)
+
+        self.user_class = User
+
+        class Role(Base):
+            __tablename__ = 'roles'
+            id = Column(Integer, primary_key=True)
+
+        self.role_class = Role
+
+        class Permission(Base):
+            __tablename__ = 'permissions'
+            id = Column(Integer, primary_key=True)
+
+        self.permission_class = Permission
+
+        return SQLAlchemyRBAC(User, Role, Permission)
+
+    @pytest.fixture(params=range(3))
+    def user_a(self, request):
+        return self.user_class(id=request.param)
+
+    @pytest.fixture(params=range(3, 6))
+    def user_b(self, request):
+        return self.user_class(id=request.param)
+
+    @pytest.fixture(params=range(3))
+    def role_x(self, request):
+        return self.role_class(id=request.param)
+
+    @pytest.fixture(params=range(3, 6))
+    def role_y(self, request):
+        return self.role_class(id=request.param)
+
+    @pytest.fixture(params=range(3))
+    def perm_p(self, request):
+        return self.permission_class(id=request.param)
+
+    @pytest.fixture(params=range(3, 6))
+    def perm_q(self, request):
+        return self.permission_class(id=request.param)

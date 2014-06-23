@@ -60,13 +60,19 @@ class SQLAlchemyRBAC(FlatRBAC):
         getattr(user, self._roles_rel).append(role)
 
     def unassign(self, user, role):
-        getattr(user, self._roles_rel).remove(role)
+        try:
+            getattr(user, self._roles_rel).remove(role)
+        except ValueError:
+            pass  # not in list, ignore
 
     def permit(self, role, permission):
-        getattr(role, self._perms_rel).add(permission)
+        getattr(role, self._perms_rel).append(permission)
 
     def revoke(self, role, permission):
-        getattr(role, self._perms_rel).delete(permission)
+        try:
+            getattr(role, self._perms_rel).remove(permission)
+        except ValueError:
+            pass  # not in list, ignore
 
     def allows(self, role, permission):
         return permission in getattr(role, self._perms_rel)
