@@ -1,81 +1,75 @@
+from __future__ import absolute_import
+
 from sqlalchemy import Column, ForeignKey, Integer, Table
 from sqlalchemy.orm import relationship
 
-from .. import FlatRBAC
+from . import FlatRBAC
 
 
 class SQLAlchemyRBAC(FlatRBAC):
     def __init__(self,
-                 Base,
-                 user_id_type=Integer,
-                 role_id_type=Integer,
-                 permission_id_type=Integer,
+                 user_type,
+                 role_type,
+                 permission_type,
                  prefix='rbac_',
                  ):
 
-        user_table_name = prefix + 'users',
-        role_table_name = prefix + 'roles',
-        permission_table_name = prefix + 'permissions'
+        metadata = user_type.metadata
+        self.prefix = prefix
+        self._roles_rel = '_' + self.prefix  + 'roles'
+        self._perms_rel = '_' + self.prefix  + 'permissions'
 
-        user_role = Table(
-            prefix + 'user_role_map',
-            Base.metadata,
+        user_key = user_type.id
+        role_key = role_type.id
+        permission_key = permission_type.id
+
+        user_role_map = Table(
+            self.prefix + 'user_role_map',
+            metadata,
+
             Column('user_id',
-                   user_id_type,
-                   ForeignKey(user_table_name + '.id')),
+                   user_key.type,
+                   ForeignKey(user_key)),
             Column('role_id',
-                   role_id_type,
-                   ForeignKey(role_table_name + '.id')),
+                   role_key.type,
+                   ForeignKey(role_key)),
         )
 
-        role_permission = Table(
-            prefix + 'role_permission_map',
-            Base.metadata,
+        role_permissions_map = Table(
+            self.prefix + 'role_permission_map',
+            metadata,
+
             Column('role_id',
-                   role_id_type,
-                   ForeignKey(role_table_name + '.id')),
+                   role_key.type,
+                   ForeignKey(role_key)),
             Column('permission_id',
-                   permission_id_type,
-                   ForeignKey(permission_table_name + '.id')),
+                   permission_key.type,
+                   ForeignKey(permission_key)),
         )
 
-        class RBACUser(Base):
-            __tablename__ = user_table_name
-            id = Column(user_id_type, primary_key=True)
-
-        self.user_class = RBACUser
-
-        class RBACRole(Base):
-            __tablename__ = prefix + 'roles'
-            id = Column(role_id_type, primary_key=True)
-            users = relationship(RBACUser, secondary=user_role,
-                                 backref='roles')
-
-        self.role_class = RBACRole
-
-        class RBACPermission(Base):
-            __tablename__ = prefix + 'permissions'
-            id = Column(permission_id_type, primary_key=True)
-            roles = relationship(RBACRole, secondary=role_permission,
-                                 backref='permissions')
-
-        self.permission_class = RBACPermission
+        # add orm relationships
+        setattr(user_type, self._roles_rel, relationship(
+            role_type, secondary=user_role_map,
+        ))
+        setattr(role_type, self._perms_rel, relationship(
+            permission_type, secondary=role_permissions_map,
+        ))
 
     # RBAC api:
     def assign(self, user, role):
-        user.roles.append(role)
+        getattr(user, self._roles_rel).append(role)
 
     def unassign(self, user, role):
-        user.roles.remove(role)
+        getattr(user, self._roles_rel).remove(role)
 
     def permit(self, role, permission):
-        role.permissions.add(permission)
+        getattr(role, self._perms_rel).add(permission)
 
     def revoke(self, role, permission):
-        role.permissions.delete(permission)
+        getattr(role, self._perms_rel).delete(permission)
 
     def allows(self, role, permission):
-        return permission in role.permissions
+        return permission in getattr(role, self._perms_rel)
 
     def get_assigned_roles(self, user):
-        return user.roles.all()
+        return list(getattr(user, self._roles_rel))
