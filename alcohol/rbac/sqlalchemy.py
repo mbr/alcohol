@@ -27,8 +27,14 @@ class SQLAlchemyRBAC(FlatRBAC):
                  permission_type,
                  prefix='rbac_',
                  ):
+        if not (role_type.metadata ==
+                permission_type.metadata ==
+                user_type.metadata):
+            raise TypeError('All three models must be part of the same '
+                            'metadata.')
 
         metadata = user_type.metadata
+
         self.prefix = prefix
         self._roles_rel = '_' + self.prefix + 'roles'
         self._perms_rel = '_' + self.prefix + 'permissions'
