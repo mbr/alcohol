@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from sqlalchemy import Column, ForeignKey, Integer, Table
+from sqlalchemy import Column, ForeignKey, Table
 from sqlalchemy.orm import relationship
 
 from . import FlatRBAC
@@ -16,8 +16,8 @@ class SQLAlchemyRBAC(FlatRBAC):
 
         metadata = user_type.metadata
         self.prefix = prefix
-        self._roles_rel = '_' + self.prefix  + 'roles'
-        self._perms_rel = '_' + self.prefix  + 'permissions'
+        self._roles_rel = '_' + self.prefix + 'roles'
+        self._perms_rel = '_' + self.prefix + 'permissions'
 
         user_key = user_type.id
         role_key = role_type.id
