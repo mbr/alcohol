@@ -2,11 +2,9 @@
 # coding=utf8
 
 import base64
-from binascii import hexlify, unhexlify
-import hashlib
+from binascii import hexlify
 import json
 import math
-import os
 import struct
 import time
 
@@ -110,9 +108,9 @@ class TokenGenerator(object):
         Contains the exact of generated tokens, in bytes. This is the length of
         the returned token strings."""
         handler = self._get_handler({})
-        return handler.default_salt_size +\
-               self._expires_token_length +\
-               handler.checksum_size
+        return (handler.default_salt_size +
+                self._expires_token_length +
+                handler.checksum_size)
 
     def _unpack_token(self, token):
         token = str(token)
