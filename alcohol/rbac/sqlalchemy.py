@@ -41,10 +41,10 @@ class SQLAlchemyRBAC(FlatRBAC):
             self.prefix + 'user_role_map',
             metadata,
 
-            Column('user_id',
+            Column('user_pkey',
                    user_key_col.type,
                    ForeignKey(user_key_col)),
-            Column('role_id',
+            Column('role_pkey',
                    role_key_col.type,
                    ForeignKey(role_key_col)),
         )
@@ -53,10 +53,10 @@ class SQLAlchemyRBAC(FlatRBAC):
             self.prefix + 'role_permission_map',
             metadata,
 
-            Column('role_id',
+            Column('role_pkey',
                    role_key_col.type,
                    ForeignKey(role_key_col)),
-            Column('permission_id',
+            Column('permission_pkey',
                    permission_key_col.type,
                    ForeignKey(permission_key_col)),
         )
