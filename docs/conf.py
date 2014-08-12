@@ -272,4 +272,5 @@ intersphinx_mapping = {
     'http://discorporate.us/projects/Blinker/docs/1.1/': None,
     'http://werkzeug.pocoo.org/docs/': None,
     'http://packages.python.org/passlib/': None,
+    'http://docs.sqlalchemy.org/en/latest/': None,
 }
