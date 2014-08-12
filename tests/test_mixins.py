@@ -2,14 +2,12 @@
 # coding=utf8
 
 from datetime import datetime, timedelta
-import sys
 import time
 import unittest
 
 from sqlalchemy import create_engine, Column, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.session import sessionmaker
-from sqlalchemy.exc import IntegrityError
 
 import passlib.context
 from alcohol.mixins import *
@@ -110,7 +108,7 @@ class TestPasswordMixin(BaseTestCase):
         user = self.User()
 
         with self.assertRaises(TypeError):
-            x = user.password
+            user.password
 
 
 class TestEmailMixin(BaseTestCase):
@@ -176,13 +174,13 @@ class TestEmailMixin(BaseTestCase):
     def test_can_use_any_email_token(self):
         user = self.User(unverified_email='unverified@email.invalid')
 
-        token1 = user.create_email_activation_token()
-        token2 = user.create_email_activation_token()
-        token3 = user.create_email_activation_token()
-        token4 = user.create_email_activation_token()
-        token5 = user.create_email_activation_token()
+        user.create_email_activation_token()
+        user.create_email_activation_token()
+        user.create_email_activation_token()
+        t = user.create_email_activation_token()
+        user.create_email_activation_token()
 
-        self.assertTrue(user.activate_email(token4))
+        self.assertTrue(user.activate_email(t))
 
 
 class TestSqlAlchemyPasswordMixin(TestPasswordMixin):
