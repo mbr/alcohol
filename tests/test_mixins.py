@@ -26,7 +26,7 @@ class TestPasswordMixin(BaseTestCase):
             token_gen = TokenGenerator('devkey', context=crypt_context)
 
             def __init__(self, **kwargs):
-                for k, v in kwargs.iteritems():
+                for k, v in kwargs.items():
                     setattr(self, k, v)
 
         self.User = UserClass
@@ -120,7 +120,7 @@ class TestEmailMixin(BaseTestCase):
             token_gen = TokenGenerator('devkey', context=crypt_context)
 
             def __init__(self, **kwargs):
-                for k, v in kwargs.iteritems():
+                for k, v in kwargs.items():
                     setattr(self, k, v)
 
         self.User = UserClass
