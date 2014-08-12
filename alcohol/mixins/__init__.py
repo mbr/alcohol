@@ -1,12 +1,7 @@
 #!/usr/bin/env python
 # coding=utf8
 
-from datetime import datetime
-import hashlib
-import os
 import time
-
-from alcohol.tokengen import TokenGenerator
 
 
 def password_mixin(get_token_gen=lambda obj: obj.token_gen,
