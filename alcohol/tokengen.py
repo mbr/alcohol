@@ -44,7 +44,7 @@ class TokenGenerator(object):
     timestamp (12 bytes long) and 'Hash' the resulting hash.
 
     :param secret_key: The secret key used by the application. Used to ensure
-    that generated tokens stem from this application.
+    that generated tokens stem from this application. Must be a bytestring.
 
     :param context: A :py:class:`passlib.context.CryptContext`.
     """
@@ -74,7 +74,8 @@ class TokenGenerator(object):
         # need to use hexlify, as not all raw byte strings are
         # json dumpable
         msg = json.dumps((expires,
-                          hexlify(bound_value) if bound_value else None,
+                          hexlify(bound_value) if bound_value
+                          else None,
                           hexlify(self.secret_key)))
 
         return handler._calc_checksum(msg)
@@ -84,11 +85,11 @@ class TokenGenerator(object):
 
         :param expires: A unix timestamp of when the token should be considered
                         expired. Must be an integer and fit into 8 bytes.
-        :param bound_value: A value tied to this token. This basically acts as
-                            a second token-specific secret key.
-        :return: A base64 string containing salt, expiry date and key combined
-                into one. Its length will be :py:attr:`token_length` characters
-                long.
+        :param bound_value: A string tied to this token. This basically
+                            acts as a second token-specific secret key.
+        :return: A base64 bytestring containing salt, expiry date and key
+                 combined into one. Its length will be :py:attr:`token_length`
+                 characters long.
         """
         assert(self.max_expires >= expires)
         expires = int(expires)

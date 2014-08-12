@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import time
 import unittest
 
+from six import b
 from sqlalchemy import create_engine, Column, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.session import sessionmaker
@@ -21,7 +22,7 @@ class TestPasswordMixin(BaseTestCase):
     def setUp(self):
         class UserClass(password_mixin()):
             crypt_context = passlib.context.CryptContext(self.hashfunc_name)
-            token_gen = TokenGenerator('devkey', context=crypt_context)
+            token_gen = TokenGenerator(b('devkey'), context=crypt_context)
 
             def __init__(self, **kwargs):
                 for k, v in kwargs.items():
@@ -115,7 +116,7 @@ class TestEmailMixin(BaseTestCase):
     def setUp(self):
         class UserClass(email_mixin()):
             crypt_context = passlib.context.CryptContext(self.hashfunc_name)
-            token_gen = TokenGenerator('devkey', context=crypt_context)
+            token_gen = TokenGenerator(b('devkey'), context=crypt_context)
 
             def __init__(self, **kwargs):
                 for k, v in kwargs.items():
@@ -195,7 +196,7 @@ class TestSqlAlchemyPasswordMixin(TestPasswordMixin):
             id = Column(Integer(), primary_key=True)
 
             crypt_context = passlib.context.CryptContext(self.hashfunc_name)
-            token_gen = TokenGenerator('devkey', context=crypt_context)
+            token_gen = TokenGenerator(b('devkey'), context=crypt_context)
 
         self.Base.metadata.drop_all()
         self.Base.metadata.create_all()
