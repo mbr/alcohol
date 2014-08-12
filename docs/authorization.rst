@@ -8,6 +8,9 @@ alcohol provides authorization capabilities in line with the
 Four different models are known in the mentioned standard,
 of which alcohol currently only supports one, `Flat RBAC`_.
 
+This page illustrates the basic concepts, if you want to dive right into a
+practical example, see :doc:`sql`.
+
 
 Core concepts
 -------------
@@ -110,3 +113,11 @@ specific permission (this goes further than the NIST Flat RBAC requirements)::
 
 .. [1] http://csrc.nist.gov/rbac/sandhu-ferraiolo-kuhn-00.pdf
 .. [2] http://csrc.nist.gov/rbac/sandhu-ferraiolo-kuhn-00.pdf, page 4
+
+
+SQL backend
+-----------
+
+An example on how to use this backend is available: :doc:`sql`.
+
+.. autoclass:: alcohol.rbac.sqlalchemy.SQLAlchemyRBAC

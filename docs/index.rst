@@ -20,4 +20,5 @@ common cases.
    extras
    tokengen
    mixins
+   sql
    changes
