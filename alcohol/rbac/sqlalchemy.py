@@ -14,7 +14,7 @@ def _pkey_1col(decl_type):
     cols = _pkey_cols(decl_type)
 
     if len(cols) != 1:
-        raise TypeError('SQLAlchemy RBAC only supports models with a single '
+        raise TypeError('SQLAlchemyRBAC only supports models with a single '
                         'primary key column.')
 
     return cols[0]
