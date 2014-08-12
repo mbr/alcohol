@@ -6,6 +6,20 @@ from sqlalchemy.orm import relationship
 from . import FlatRBAC
 
 
+def _pkey_cols(decl_type):
+    return decl_type.__table__.primary_key.columns.values()
+
+
+def _pkey_1col(decl_type):
+    cols = _pkey_cols(decl_type)
+
+    if len(cols) != 1:
+        raise TypeError('SQLAlchemy RBAC only supports models with a single '
+                        'primary key column.')
+
+    return cols[0]
+
+
 class SQLAlchemyRBAC(FlatRBAC):
     def __init__(self,
                  user_type,
@@ -19,20 +33,20 @@ class SQLAlchemyRBAC(FlatRBAC):
         self._roles_rel = '_' + self.prefix + 'roles'
         self._perms_rel = '_' + self.prefix + 'permissions'
 
-        user_key = user_type.id
-        role_key = role_type.id
-        permission_key = permission_type.id
+        user_key_col = _pkey_1col(user_type)
+        role_key_col = _pkey_1col(role_type)
+        permission_key_col = _pkey_1col(permission_type)
 
         user_role_map = Table(
             self.prefix + 'user_role_map',
             metadata,
 
             Column('user_id',
-                   user_key.type,
-                   ForeignKey(user_key)),
+                   user_key_col.type,
+                   ForeignKey(user_key_col)),
             Column('role_id',
-                   role_key.type,
-                   ForeignKey(role_key)),
+                   role_key_col.type,
+                   ForeignKey(role_key_col)),
         )
 
         role_permissions_map = Table(
@@ -40,11 +54,11 @@ class SQLAlchemyRBAC(FlatRBAC):
             metadata,
 
             Column('role_id',
-                   role_key.type,
-                   ForeignKey(role_key)),
+                   role_key_col.type,
+                   ForeignKey(role_key_col)),
             Column('permission_id',
-                   permission_key.type,
-                   ForeignKey(permission_key)),
+                   permission_key_col.type,
+                   ForeignKey(permission_key_col)),
         )
 
         # add orm relationships
