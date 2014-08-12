@@ -61,8 +61,8 @@ the ACL to check if we assigned roles correctly:
 
   >>> acl.get_assigned_roles('bob')
   set(['programmer'])
-  >>> acl.get_assigned_roles('alice')
-  set(['ceo', 'programmer'])
+  >>> sorted(acl.get_assigned_roles('alice'))
+  ['ceo', 'programmer']
 
 We can even query for permissions now, even though we expect them all to
 fail::
