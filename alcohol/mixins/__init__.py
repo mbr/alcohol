@@ -2,6 +2,8 @@
 # coding=utf8
 
 from binascii import hexlify
+import os
+
 from itsdangerous import TimestampSigner, BadData, URLSafeTimedSerializer
 
 
@@ -10,15 +12,16 @@ DAY = 60 * 60 * 24
 
 class PasswordMixin(object):
     TOKEN_NONCE_SIZE = 5
+    RANDOM_SOURCE = os.urandom
 
     def get_context(self):
         return self.crypt_context
 
     def check_password(self, password):
-        return self.get_context(self).verify(password, self._pwhash)
+        return self.get_context().verify(password, self._pwhash)
 
     def _create_signer(self, secret_key):
-        return TimestampSigner(secret_key, self._pwhash, digest_method='hmac')
+        return TimestampSigner(secret_key, self._pwhash, key_derivation='hmac')
 
     def check_password_reset_token(self, secret_key, token, max_age_sec=DAY):
         signer = self._create_signer(secret_key)
@@ -41,7 +44,7 @@ class PasswordMixin(object):
 
         # sign a few random bytes to hide repetitions
         signer = self._create_signer(secret_key)
-        return signer.sign(hexlify(self.TOKEN_NONCE_SIZE))
+        return signer.sign(hexlify(self.RANDOM_SOURCE(self.TOKEN_NONCE_SIZE)))
 
     @property
     def password(self):
@@ -57,7 +60,7 @@ class PasswordMixin(object):
 class EmailMixin(object):
     def _create_serializer(self, secret_key):
         return URLSafeTimedSerializer(
-            'devkey', self.email, signer_kwargs={'key_derivation': 'hmac'}
+            secret_key, self.email, signer_kwargs={'key_derivation': 'hmac'}
         )
 
     def activate_email(self, secret_key, token, max_age_sec=DAY):
