@@ -60,9 +60,9 @@ class TestPasswordMixin(BaseTestCase):
         user = self.User(password='foo')
         token = user.create_reset_password_token()
 
-        for i in xrange(0, len(token)):
+        for i in range(0, len(token)):
             orig_byte = token[i]
-            new_byte = '0' if orig_byte != '0' else '1'
+            new_byte = b('0') if orig_byte != b('0') else b('1')
             bad_token = token[:i] + new_byte + token[i + 1:]
 
             self.assertFalse(user.check_password_reset_token(bad_token))
@@ -136,7 +136,7 @@ class TestEmailMixin(BaseTestCase):
         user = self.User(unverified_email='my@email.invalid')
         token = user.create_email_activation_token()
 
-        for i in xrange(0, len(token)):
+        for i in range(0, len(token)):
             orig_byte = token[i]
             new_byte = '0' if orig_byte != '0' else '1'
             bad_token = token[:i] + new_byte + token[i + 1:]

@@ -3,11 +3,11 @@
 
 import base64
 from binascii import hexlify
-import json
 import math
 import struct
 import time
 
+from six import b
 import passlib.context
 
 
@@ -19,6 +19,12 @@ def base64_encode(s):
 
 def base64_decode(s):
     return base64.urlsafe_b64decode(s + '=' * (-len(s) % 4))
+
+
+def force_bytestring(s, encoding='ascii'):
+    if isinstance(s, str):
+        return s.encode('ascii')
+    return s
 
 
 class TokenException(Exception):
@@ -73,21 +79,20 @@ class TokenGenerator(object):
     def _generate_hash(self, handler, expires, bound_value):
         # need to use hexlify, as not all raw byte strings are
         # json dumpable
-        msg = json.dumps((expires,
-                          hexlify(bound_value) if bound_value
-                          else None,
-                          hexlify(self.secret_key)))
-
-        return handler._calc_checksum(msg)
+        return handler._calc_checksum(b('|').join([
+            str(expires).encode('ascii'),
+            hexlify(bound_value),
+            hexlify(self.secret_key)
+        ]))
 
     def generate_token(self, expires=-1, bound_value=None):
         """Generates a new token.
 
         :param expires: A unix timestamp of when the token should be considered
                         expired. Must be an integer and fit into 8 bytes.
-        :param bound_value: A string tied to this token. This basically
+        :param bound_value: A bytestring tied to this token. This basically
                             acts as a second token-specific secret key.
-        :return: A base64 bytestring containing salt, expiry date and key
+        :return: A base64 string containing salt, expiry date and key
                  combined into one. Its length will be :py:attr:`token_length`
                  characters long.
         """
@@ -100,7 +105,11 @@ class TokenGenerator(object):
         expires_packed = struct.pack(self._pack_format, expires)
         hash = self._generate_hash(handler, expires, bound_value)
 
-        return str(handler.salt) + expires_packed + str(hash)
+        # hash and salt can be strings or bytestrings, depending on the
+        # context (and the chosen KDF/hashalg). force them to bytestrings
+        return (force_bytestring(handler.salt)
+                + expires_packed
+                + force_bytestring(hash))
 
     @property
     def token_max_length(self):

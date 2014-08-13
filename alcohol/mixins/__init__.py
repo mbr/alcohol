@@ -23,14 +23,14 @@ def password_mixin(get_token_gen=lambda obj: obj.token_gen,
         def check_password_reset_token(self, token):
             return get_token_gen(self).check_token(
                 token,
-                bound_value=self._pwhash
+                bound_value=self._pwhash.encode('utf8')
             )
 
         def create_reset_password_token(self, valid_for=60 * 60 * 24):
             valid_until = int(time.time() + valid_for)
             return get_token_gen(self).generate_token(
                 expires=valid_until,
-                bound_value=self._pwhash
+                bound_value=self._pwhash.encode('utf8')
             )
 
         @property
