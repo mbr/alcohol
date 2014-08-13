@@ -3,6 +3,8 @@ API Changes
 
 0.4
 ---
+* Removed :py:mod:`~alcohol.tokengen` module, its functionality being replaced
+  by :py:mod:`itsdangerous`.
 * The :ref:`authorization` module has been added.
 
 0.3
