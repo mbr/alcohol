@@ -8,6 +8,8 @@ API Changes
   by :py:mod:`itsdangerous`.
 * The :ref:`authorization` module has been added.
 * Dropped Google App Engine support.
+* Removed support for server-side ``NOW()`` in
+  :class:`~alcohol.mixins.sqlalchemy.TimestampMixin`.
 
 
 0.3

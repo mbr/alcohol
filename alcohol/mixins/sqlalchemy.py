@@ -2,55 +2,21 @@
 # coding=utf8
 
 from __future__ import absolute_import
-from datetime import datetime, timedelta
-from sqlalchemy import Column, String, Unicode, DateTime, func
-from . import password_mixin
+from datetime import datetime
+from sqlalchemy import Column, String, Unicode, DateTime
+from . import PasswordMixin, EmailMixin
 
 
-def sqlalchemy_password_mixin(max_hash_size=500, **kwargs):
-    """Creates a password mixin that contains SQLAlchemy columns.
-
-    :param max_hash_size: The maximum size of the hash expected to be generated
-                          by the default scheme in the crypt context. This will
-                          be used as the size for the `_pwhash` column."""
-    MixinBase = password_mixin(**kwargs)
-
-    class SqlAlchemyPasswordMixin(MixinBase):
-        _pwhash = Column(String(max_hash_size))
-
-    return SqlAlchemyPasswordMixin
+class SQLAlchemyPasswordMixin(PasswordMixin):
+    HASH_FIELD_LEN = 511
+    _pwhash = Column(String(HASH_FIELD_LEN))
 
 
-def sqlalchemy_email_mixin(max_email_length=1024, **kwargs):
-    """Creates an email mixin containing SQLAlchemy columns.
-
-    :param max_email_length: The column size for the generated `email` and
-                             `unverified_email` columns."""
-    MixinBase = email_mixin(**kwargs)
-
-    class SqlAlchemyEmailMixin(MixinBase):
-        email = Column(Unicode(max_email_length))
-        unverified_email = Column(Unicode(max_email_length))
-
-    return SqlAlchemyEmailMixin
+class SQLAlchemyEmailMixin(EmailMixin):
+    MAX_EMAIL_LENGTH = 1023
+    email = Column(Unicode(MAX_EMAIL_LENGTH))
 
 
-def sqlalchemy_timestamp_mixin(use_serverside_now=True):
-    """Create a new :py:class:`alcohol.mixins.sqlalchemy.TimestampMixin` class.
-
-    :param use_serverside_now: Whether to use an SQL NOW() function or add a
-                               client-side default-value of
-                               :py:attr:`datetime.datetime.now`.
-    :return: A class suitable for mixing into any SQLAlchemy model object.
-    """
-    if use_serverside_now:
-        class TimestampMixin(object):
-            created = Column(DateTime, default=datetime.utcnow, nullable=False)
-            modified = Column(DateTime, onupdate=datetime.utcnow)
-    else:
-        class TimestampMixin(object):
-            created = Column(DateTime, server_default=func.now(),
-                             nullable=False)
-            modified = Column(DateTime, onupdate=func.now())
-
-    return TimestampMixin
+class TimestampMixin(object):
+    created = Column(DateTime, default=datetime.utcnow, nullable=False)
+    modified = Column(DateTime, onupdate=datetime.utcnow)
