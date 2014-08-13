@@ -18,7 +18,6 @@ common cases.
    authentication
    authorization
    extras
-   tokengen
    mixins
    sql
    changes
