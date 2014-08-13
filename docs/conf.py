@@ -273,4 +273,5 @@ intersphinx_mapping = {
     'http://werkzeug.pocoo.org/docs/': None,
     'http://packages.python.org/passlib/': None,
     'http://docs.sqlalchemy.org/en/latest/': None,
+    'http://pythonhosted.org//itsdangerous/': None,
 }
