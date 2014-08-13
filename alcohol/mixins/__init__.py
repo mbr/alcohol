@@ -1,78 +1,74 @@
 #!/usr/bin/env python
 # coding=utf8
 
-import time
+from binascii import hexlify
+from itsdangerous import TimestampSigner, BadData, URLSafeTimedSerializer
 
 
-def password_mixin(get_token_gen=lambda obj: obj.token_gen,
-                   get_context=lambda obj: obj.crypt_context):
-    """Create a new :py:class:`~alcohol.mixins.PasswordMixin` class.
-
-    :param get_token_gen: A function that given an object returns a token
-                          generator instance. Defaults to the equivalent of
-                          `getattr(obj, 'token_gen')`.
-    :param get_context: Similiar to :py:func:`get_token_gen`, should return a
-                        :py:class:`~passlib.context.CryptContext`.
-    """
-    class PasswordMixin(object):
-        # fields:
-        # self._pwhash
-        def check_password(self, password):
-            return get_context(self).verify(password, self._pwhash)
-
-        def check_password_reset_token(self, token):
-            return get_token_gen(self).check_token(
-                token,
-                bound_value=self._pwhash.encode('utf8')
-            )
-
-        def create_reset_password_token(self, valid_for=60 * 60 * 24):
-            valid_until = int(time.time() + valid_for)
-            return get_token_gen(self).generate_token(
-                expires=valid_until,
-                bound_value=self._pwhash.encode('utf8')
-            )
-
-        @property
-        def password(self):
-            raise TypeError(
-                'password property is write-only, use check_password'
-            )
-
-        @password.setter
-        def password(self, new_password):
-            self._pwhash = get_context(self).encrypt(new_password)
-
-    return PasswordMixin
+DAY = 60 * 60 * 24
 
 
-def email_mixin(get_token_gen=lambda obj: obj.token_gen):
-    """Create a new :py:class:`alcohol.mixins.EmailMixin` class.
+class PasswordMixin(object):
+    TOKEN_NONCE_SIZE = 5
 
-    :param get_token_gen: A function that given an object returns a
-                                     token generator instance. Defaults to the
-                                     equivalent of `getattr(obj, 'token_gen')`.
-    """
-    class EmailMixin(object):
-        def activate_email(self, token):
-            if not get_token_gen(self).check_token(
-                token,
-                bound_value=self.unverified_email
-            ):
-                return False
+    def get_context(self):
+        return self.crypt_context
 
-            self.email = self.unverified_email
-            self.unverified_email = None
+    def check_password(self, password):
+        return self.get_context(self).verify(password, self._pwhash)
+
+    def _create_signer(self, secret_key):
+        return TimestampSigner(secret_key, self._pwhash, digest_method='hmac')
+
+    def check_password_reset_token(self, secret_key, token, max_age_sec=DAY):
+        signer = self._create_signer(secret_key)
+        try:
+            signer.unsign(token, max_age=max_age_sec)
             return True
+        except BadData:
+            return False
 
-        def create_email_activation_token(self, valid_for=60 * 60 * 24):
-            if not getattr(self, 'unverified_email', None):
-                raise AttributeError('No email set or email already verified')
-            valid_until = int(time.time() + valid_for)
-            return \
-                get_token_gen(self).generate_token(
-                    expires=valid_until,
-                    bound_value=self.unverified_email
-                )
+    def create_reset_password_token(self, secret_key):
+        """Create a signed password reset token.
 
-    return EmailMixin
+        A pasword reset token uses (secret_key + password_hash)
+        as the signing key, causing it to stop working once the password
+        has been altered. It also includes a creation timestamp.
+
+        :param secret_key: The server's own secret key.
+        :return: An urlsafe string.
+        """
+
+        # sign a few random bytes to hide repetitions
+        signer = self._create_signer(secret_key)
+        return signer.sign(hexlify(self.TOKEN_NONCE_SIZE))
+
+    @property
+    def password(self):
+        raise TypeError(
+            'password property is write-only, use check_password'
+        )
+
+    @password.setter
+    def password(self, new_password):
+        self._pwhash = self.get_context().encrypt(new_password)
+
+
+class EmailMixin(object):
+    def _create_serializer(self, secret_key):
+        return URLSafeTimedSerializer(
+            'devkey', self.email, signer_kwargs={'key_derivation': 'hmac'}
+        )
+
+    def activate_email(self, secret_key, token, max_age_sec=DAY):
+        serializer = self._create_serializer(secret_key)
+        try:
+            return serializer.loads(token, max_age=max_age_sec)
+        except BadData:
+            return False
+
+    def create_email_activation_token(self, secret_key, email):
+        """Creates a new activation token that allows changing the email
+        address from the previous address to the next one."""
+
+        return self._create_serializer(secret_key).dumps(self.email)
