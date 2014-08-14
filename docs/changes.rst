@@ -10,6 +10,7 @@ API Changes
 * Dropped Google App Engine support.
 * Removed support for server-side ``NOW()`` in
   :class:`~alcohol.mixins.sqlalchemy.TimestampMixin`.
+* The whole mixin module has been redesigned and is not backwards compatible.
 
 
 0.3
