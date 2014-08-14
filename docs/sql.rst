@@ -10,18 +10,18 @@ The following example is a walk-through for a simple web application that uses
 
 First, we start with a simple model::
 
+  from alcohol.rbac.sqlalchemy import SQLAlchemyRBAC
+  from alcohol.mixins.sqlalchemy import SQLAlchemyEmailMixin,SQLAlchemyPasswordMixin
   from sqlalchemy import Column, Integer, Unicode, String
   from sqlalchemy.ext.declarative import declarative_base
-  from alcohol.rbac.sqlalchemy import SQLAlchemyRBAC
 
   Base = declarative_base()
 
 
-  class User(Base):
+  class User(Base, SQLAlchemyEmailMixin, SQLAlchemyPasswordMixin):
       __tablename__ = 'users'
       id = Column(Integer, primary_key=True)
       name = Column(Unicode, unique=True)
-      email = Column(String)
 
 
   class Role(Base):
@@ -102,3 +102,29 @@ Of course, we will want to check these later on::
 It is somewhat cumbersome to look up the ``Permissions`` object each time, how
 to alleviate this is up to the application. A simple-yet-effective way is
 caching the Permissions known to the application.
+
+
+Passwords and emails
+--------------------
+
+Notice that due to the fact that we added
+:class:`~alcohol.mixins.sqlalchemy.SQLAlchemyPasswordMixin` and
+:class:`~alcohol.mixins.sqlalchemy.SQLAlchemyEmailMixin`, we have additional
+functionality on users unrelated to authoziation::
+
+  SECRET_KEY='my-apps-secret-key'
+
+  pw_reset_token = alice.create_password_reset_token(SECRET_KEY)
+
+  # later on, we can validate this token
+  if alice.check_password_reset_token(SECRET_KEY, pw_reset_token):
+      alice.password = 'new-pw'
+
+  # to activate emails, a similar functionality exists:
+  mail_token = alice.create_email_activation_token(SECRET_KEY, 'new@mail.com')
+
+  alice.activate_email(SECRET_KEY, mail_token)
+
+Calling :meth:`~alcohol.mixins.sqlalchemy.SQLAlchemyEmailMixin.activate_email`
+will automatically update the email address of Alice here, provided the token
+has not been tampered with and is not older than a day.
