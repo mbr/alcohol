@@ -3,6 +3,23 @@
 Authentication
 ==============
 
+`Authentication <https://en.wikipedia.org/wiki/Authentication>`_ is the act
+of confirming that a user (or another actor in your system) is who he/she/it
+says. A very common method to authenticate users, for example, is to ask them
+for a password - if they know the correct password, the system assumes their
+identity is accurate.
+
+alcohol is not tied to a specific way of authenticating users (like
+passwords) and can support many different kinds.
+
+.. warning:: The authentication part of alcohol is still under development and
+             its API may undergo even conceptual changes in the future. This
+             does not apply for the authorization module.
+
+
+Data flow
+---------
+
 The flow of the library components revolves heavily around a signal named
 :data:`~alcohol.user_id_changed`.
 

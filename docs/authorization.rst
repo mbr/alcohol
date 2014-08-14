@@ -3,6 +3,10 @@
 Authorization
 =============
 
+`Authorization <https://en.wikipedia.org/wiki/Authorization>`_ most often
+happens after a user is already authenticated and describes the process of
+controlling access, i.e. deciding what a user is actually allowed to do.
+
 alcohol provides authorization capabilities in line with the
 `NIST RBAC model <https://en.wikipedia.org/wiki/NIST_RBAC_model>`_ (see [1]_).
 Four different models are known in the mentioned standard,

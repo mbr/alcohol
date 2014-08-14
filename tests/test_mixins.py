@@ -19,7 +19,6 @@ import pytest
 from six import b, int2byte, indexbytes
 
 
-
 @pytest.fixture
 def scheme():
     return "sha256_crypt"
