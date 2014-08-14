@@ -21,8 +21,8 @@
   token = bob.create_password_reset_token(SECRET_KEY)
 
 
-alcohol is a framework for handling user :ref:`authentication` and
-:ref:`authorization`. Both of these parts can be used independently and support
+alcohol is a framework for handling user :doc:`authentication` and
+:doc:`authorization`. Both of these parts can be used independently and support
 SQLAlchemy_ and in-memory backends.
 
 Authorization is handled using *Role Based Access Controls* (a
