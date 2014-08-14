@@ -11,9 +11,6 @@ DAY = 60 * 60 * 24
 
 
 class PasswordMixin(object):
-    TOKEN_NONCE_SIZE = 5
-    RANDOM_SOURCE = os.urandom
-
     def get_context(self):
         return self.crypt_context
 
@@ -31,7 +28,8 @@ class PasswordMixin(object):
         except BadData:
             return False
 
-    def create_reset_password_token(self, secret_key):
+    def create_reset_password_token(self, secret_key, random_source=os.urandom,
+                                    nonce_size=5):
         """Create a signed password reset token.
 
         A pasword reset token uses (secret_key + password_hash)
@@ -44,7 +42,7 @@ class PasswordMixin(object):
 
         # sign a few random bytes to hide repetitions
         signer = self._create_signer(secret_key)
-        return signer.sign(hexlify(self.RANDOM_SOURCE(self.TOKEN_NONCE_SIZE)))
+        return signer.sign(hexlify(random_source(nonce_size)))
 
     @property
     def password(self):
