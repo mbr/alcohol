@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding=utf8
 
+from datetime import timedelta
 import time
 
 from sqlalchemy import create_engine, Column, Integer
@@ -92,6 +93,15 @@ def user_type():
 @pytest.fixture
 def email():
     return 'another@email.invalid'
+
+
+@pytest.fixture
+def gizmo_type(Base):
+    class Gizmo(Base, TimestampMixin):
+        __tablename__ = 'gizmos'
+        id = Column(Integer, primary_key=True)
+
+    return Gizmo
 
 
 def tamper_with(bs):
@@ -243,3 +253,32 @@ def test_stores_password(pw, user_type_sqlalchemy, session, db_schema):
 
     assert user.check_password(pw)
     assert not user.check_password(invalid_password)
+
+
+def test_timestamp_set_at_creation(gizmo_type, session, db_schema):
+    g = gizmo_type()
+
+    session.add(g)
+    t = datetime.utcnow()
+    session.commit()
+    assert t - g.created < timedelta(seconds=1)
+    assert g.modified is None
+
+
+def test_timestamp_updated_on_update(gizmo_type, session, db_schema):
+    g = gizmo_type()
+
+    session.add(g)
+    session.commit()
+
+    time.sleep(1.1)
+
+    created_before = g.created
+
+    g.id = 99
+    session.add(g)
+    session.commit()
+
+    t = datetime.utcnow()
+    assert t - g.modified < timedelta(seconds=1)
+    assert g.created == created_before
