@@ -8,14 +8,16 @@ from sqlalchemy import create_engine, Column, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.session import sessionmaker
 
-from alcohol.mixins import *
-from alcohol.mixins.sqlalchemy import *
+from alcohol.mixins import EmailMixin, PasswordMixin
+from alcohol.mixins.sqlalchemy import (
+    SQLAlchemyEmailMixin, SQLAlchemyPasswordMixin, TimestampMixin
+)
+from itsdangerous import want_bytes
 from pytest_extra import group_fixture
 from passlib.context import CryptContext
 import pytest
 from six import b, int2byte, indexbytes
 
-from itsdangerous import want_bytes
 
 
 @pytest.fixture
