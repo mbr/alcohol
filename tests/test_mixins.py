@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding=utf8
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 import time
 
 from sqlalchemy import create_engine, Column, Integer
