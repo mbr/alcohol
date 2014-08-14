@@ -5,17 +5,17 @@ from binascii import hexlify
 import os
 
 from itsdangerous import TimestampSigner, BadData, URLSafeTimedSerializer
+import passlib.apps
 
 
 DAY = 60 * 60 * 24
 
 
 class PasswordMixin(object):
-    def get_context(self):
-        return self.crypt_context
+    crypt_context = passlib.apps.custom_app_context  # overridable default
 
     def check_password(self, password):
-        return self.get_context().verify(password, self._pwhash)
+        return self.crypt_context.verify(password, self._pwhash)
 
     def _create_signer(self, secret_key):
         return TimestampSigner(secret_key, self._pwhash, key_derivation='hmac')
@@ -52,7 +52,7 @@ class PasswordMixin(object):
 
     @password.setter
     def password(self, new_password):
-        self._pwhash = self.get_context().encrypt(new_password)
+        self._pwhash = self.crypt_context.encrypt(new_password)
 
 
 class EmailMixin(object):
