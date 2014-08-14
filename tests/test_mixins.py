@@ -5,6 +5,8 @@ import time
 
 from sqlalchemy import create_engine, Column, Integer
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm.session import sessionmaker
+
 from alcohol.mixins import *
 from alcohol.mixins.sqlalchemy import *
 from pytest_extra import group_fixture
@@ -52,15 +54,34 @@ def user_type_vanilla(passlib_ctx):
 
 
 @pytest.fixture
-def user_type_sqlalchemy(passlib_ctx):
-    Base = declarative_base()
+def Base():
+    return declarative_base()
 
+
+@pytest.fixture
+def user_type_sqlalchemy(passlib_ctx, Base):
     class SQLAlchemyUser(Base, SQLAlchemyEmailMixin, SQLAlchemyPasswordMixin):
         __tablename__ = 'users'
         id = Column(Integer(), primary_key=True)
         crypt_context = passlib_ctx
 
     return SQLAlchemyUser
+
+
+@pytest.fixture
+def engine():
+    return create_engine('sqlite:///:memory:', echo=True)
+
+
+@pytest.fixture
+def db_schema(Base, engine):
+    Base.metadata.create_all(bind=engine)
+
+
+@pytest.fixture
+def session(engine):
+    Session = sessionmaker(bind=engine)
+    return Session()
 
 
 @group_fixture
@@ -204,3 +225,21 @@ def test_can_use_any_email_token(user_type, secret_key, email):
     user.create_email_activation_token(secret_key, email)
 
     assert user.activate_email(secret_key, token)
+
+
+@pytest.mark.usefixture('db_schema')
+def test_stores_password(pw, user_type_sqlalchemy, session, db_schema):
+    invalid_password = pw + 'x'
+
+    user = user_type_sqlalchemy(password=pw)
+    session.add(user)
+    session.commit()
+
+    user_id = user.id
+    del user
+
+    # retrieve
+    user = session.query(user_type_sqlalchemy).get(user_id)
+
+    assert user.check_password(pw)
+    assert not user.check_password(invalid_password)
