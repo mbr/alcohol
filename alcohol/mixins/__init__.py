@@ -64,7 +64,8 @@ class EmailMixin(object):
     def activate_email(self, secret_key, token, max_age_sec=DAY):
         serializer = self._create_serializer(secret_key)
         try:
-            return serializer.loads(token, max_age=max_age_sec)
+            self.email = serializer.loads(token, max_age=max_age_sec)
+            return True
         except BadData:
             return False
 
@@ -72,4 +73,4 @@ class EmailMixin(object):
         """Creates a new activation token that allows changing the email
         address from the previous address to the next one."""
 
-        return self._create_serializer(secret_key).dumps(self.email)
+        return self._create_serializer(secret_key).dumps(email)
