@@ -29,12 +29,13 @@ class SQLAlchemyRBAC(FlatRBAC):
 
     Upon instantiation, :class:`~alcohol.rbac.sqlalchemy.SQLAlchemyRBAC` will
     add the required tables for mapping users to roles and roles to permissions
-    to the same :class:`~sqlalchemy.schema.MetaData` object, so :func:`~
-    sqlalchemy.schema.MetaData.create_all` will work normally, provided the
-    :class:`~alcohol.rbac.sqlalchemy.SQLAlchemyRBAC` instance is created first.
+    to the same :class:`~sqlalchemy.schema.MetaData` object, so
+    :meth:`~sqlalchemy.schema.MetaData.create_all` will work normally, provided
+    the :class:`~alcohol.rbac.sqlalchemy.SQLAlchemyRBAC` instance is created
+    first.
 
     :note: Currently, SQLAlchemyRBAC only supports declarative models for
-    user, role and permissions that have a single column primary key.
+           user, role and permissions that have a single column primary key.
 
     :param user_type: A declarative SQLAlchemy model that will act as users.
     :param role_type: A declarative SQLAlchemy model that will act as roles.
@@ -48,16 +49,15 @@ class SQLAlchemyRBAC(FlatRBAC):
                              :func:`~sqlalchemy.orm.relationship` between
                              roles and permissions.
     """
+
     def __init__(self,
                  user_type,
                  role_type,
                  permission_type,
                  prefix='rbac_',
                  roles_lazy='joined',
-                 permissions_lazy='joined',
-                 ):
-        if not (role_type.metadata ==
-                permission_type.metadata ==
+                 permissions_lazy='joined', ):
+        if not (role_type.metadata == permission_type.metadata ==
                 user_type.metadata):
             raise TypeError('All three models must be part of the same '
                             'metadata.')
@@ -72,38 +72,32 @@ class SQLAlchemyRBAC(FlatRBAC):
         role_key_col = _pkey_1col(role_type)
         permission_key_col = _pkey_1col(permission_type)
 
-        user_role_map = Table(
-            self.prefix + 'user_role_map',
-            metadata,
+        user_role_map = Table(self.prefix + 'user_role_map',
+                              metadata,
+                              Column('user_pkey', user_key_col.type,
+                                     ForeignKey(user_key_col)),
+                              Column('role_pkey', role_key_col.type,
+                                     ForeignKey(role_key_col)), )
 
-            Column('user_pkey',
-                   user_key_col.type,
-                   ForeignKey(user_key_col)),
-            Column('role_pkey',
-                   role_key_col.type,
-                   ForeignKey(role_key_col)),
-        )
-
-        role_permissions_map = Table(
-            self.prefix + 'role_permission_map',
-            metadata,
-
-            Column('role_pkey',
-                   role_key_col.type,
-                   ForeignKey(role_key_col)),
-            Column('permission_pkey',
-                   permission_key_col.type,
-                   ForeignKey(permission_key_col)),
-        )
+        role_permissions_map = Table(self.prefix + 'role_permission_map',
+                                     metadata,
+                                     Column('role_pkey', role_key_col.type,
+                                            ForeignKey(role_key_col)),
+                                     Column('permission_pkey',
+                                            permission_key_col.type,
+                                            ForeignKey(permission_key_col)), )
 
         # add orm relationships
-        setattr(user_type, self._roles_rel, relationship(
-            role_type, secondary=user_role_map, lazy=roles_lazy,
-        ))
-        setattr(role_type, self._perms_rel, relationship(
-            permission_type, secondary=role_permissions_map,
-            lazy=permissions_lazy,
-        ))
+        setattr(user_type,
+                self._roles_rel,
+                relationship(role_type,
+                             secondary=user_role_map,
+                             lazy=roles_lazy, ))
+        setattr(role_type,
+                self._perms_rel,
+                relationship(permission_type,
+                             secondary=role_permissions_map,
+                             lazy=permissions_lazy, ))
 
     # RBAC api:
     def assign(self, user, role):

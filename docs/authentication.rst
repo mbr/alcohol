@@ -1,5 +1,3 @@
-.. _authentication:
-
 Authentication
 ==============
 
@@ -62,7 +60,7 @@ alcohol and communicates all information about user logins:
 .. data:: alcohol.user_id_changed
 
           Sent when any handler has found a valid User-ID. Arguments are
-          :data:`user_id_changed(sender, user_id, **kwargs)`
+          ``alcohol.user_id_changed(sender, user_id, **kwargs)``
 
           :param sender: The sender that sent the siganl.
                          This allows using :meth:`blinker.base.Signal.connect_via`

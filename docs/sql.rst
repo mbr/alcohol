@@ -125,6 +125,6 @@ functionality on users unrelated to authoziation::
 
   alice.activate_email(SECRET_KEY, mail_token)
 
-Calling :meth:`~alcohol.mixins.sqlalchemy.SQLAlchemyEmailMixin.activate_email`
+Calling ``alcohol.mixins.sqlalchemy.SQLAlchemyEmailMixin.activate_email``
 will automatically update the email address of Alice here, provided the token
 has not been tampered with and is not older than a day.

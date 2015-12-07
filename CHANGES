@@ -6,7 +6,7 @@
 ---
 * Removed ``tokengen`` module, its functionality being replaced
   by :py:mod:`itsdangerous`.
-* The :ref:`authorization` module has been added.
+* The authorization module has been added.
 * Dropped Google App Engine support.
 * Removed support for server-side ``NOW()`` in
   :class:`~alcohol.mixins.sqlalchemy.TimestampMixin`.

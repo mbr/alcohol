@@ -1,6 +1,3 @@
-.. image:: https://travis-ci.org/mbr/alcohol.svg?branch=master
-           :target: https://travis-ci.org/mbr/alcohol
-
 .. code::
 
   from alcohol.mixins.sqlalchemy import SQLAlchemyUserMixin
