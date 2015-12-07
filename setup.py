@@ -22,5 +22,5 @@ setup(name='alcohol',
       # FIXME: sqlalchemy is not a strict requirement, but building the docs
       #        is not possible without right now. unleash needs to support
       #        "for docs"-dependencies
-      install_requires=['blinker', 'passlib>=1.6', 'six', 'itsdangerous>=0.14'
+      install_requires=['blinker', 'passlib>=1.6', 'six', 'itsdangerous>=0.14',
                         'sqlalchemy'], )
