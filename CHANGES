@@ -1,3 +1,7 @@
+0.4.1
+-----
+* Added ``last_modified`` property.
+
 0.4
 ---
 * Removed ``tokengen`` module, its functionality being replaced

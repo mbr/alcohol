@@ -4,6 +4,8 @@
 from __future__ import absolute_import
 from datetime import datetime
 from sqlalchemy import Column, String, Unicode, DateTime
+from sqlalchemy.sql.expression import case
+from sqlalchemy.ext.hybrid import hybrid_property
 from . import PasswordMixin, EmailMixin
 
 
@@ -38,3 +40,35 @@ class TimestampMixin(object):
     modified = Column(DateTime, onupdate=datetime.utcnow)
     """A :py:class:`datetime.datetime` instance containing the time this record
     was last modified."""
+
+    @hybrid_property
+    def last_modified(self):
+        """A hybrid property that returns the newer of ``created`` or
+        ``modified``, or ``None`` if both are ``NULL``. Can be used in SQL
+        expressions."""
+        if self.created is not None and self.modified is not None:
+            return (self.modified if self.modified >= self.created else
+                    self.created)
+
+        if self.modified:
+            return self.modified
+
+        if self.created:
+            return self.created
+
+        # both None, returns None
+
+    @last_modified.expression
+    def last_modified(cls):
+        return case(
+            [
+                (cls.created <= cls.modified, cls.modified),
+                (cls.created > cls.modified, cls.created),
+
+                # at least one must be NULL
+                (cls.created != None, cls.created),
+                (cls.modified != None, cls.modified),
+
+                # fallthrough to NULL
+            ],
+            else_=None)

@@ -9,9 +9,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.session import sessionmaker
 
 from alcohol.mixins import EmailMixin, PasswordMixin
-from alcohol.mixins.sqlalchemy import (
-    SQLAlchemyEmailMixin, SQLAlchemyPasswordMixin, TimestampMixin
-)
+from alcohol.mixins.sqlalchemy import (SQLAlchemyEmailMixin,
+                                       SQLAlchemyPasswordMixin, TimestampMixin)
 from itsdangerous import want_bytes
 from pytest_extra import group_fixture
 from passlib.context import CryptContext
@@ -112,9 +111,8 @@ def tamper_with(bs):
     bs = want_bytes(bs)
 
     for i in range(0, len(bs)):
-        new_byte = int2byte(
-            (indexbytes(bs, i) ^ 255) & 127  # stay in ascii range
-        )
+        new_byte = int2byte((indexbytes(bs, i) ^ 255) & 127  # stay in ascii range
+                            )
 
         yield bs[:i] + new_byte + bs[i + 1:]
 
@@ -205,9 +203,7 @@ def test_email_verification_token_works(user_type, secret_key, email):
     assert user.email == email
 
 
-def test_email_verification_token_altered_fails(
-    user_type, secret_key, email
-):
+def test_email_verification_token_altered_fails(user_type, secret_key, email):
     user = user_type()
 
     token = user.create_email_activation_token(secret_key, email)
@@ -283,3 +279,25 @@ def test_timestamp_updated_on_update(gizmo_type, session, db_schema):
     t = datetime.utcnow()
     assert t - g.modified < timedelta(seconds=1)
     assert g.created == created_before
+
+
+def test_last_modified(gizmo_type, session, db_schema):
+    g = gizmo_type()
+    session.add(g)
+    session.commit()
+
+    assert g.modified is None
+    assert g.last_modified == g.created
+
+    g.id = 99
+    time.sleep(0.1)
+    session.add(g)
+    session.commit()
+
+    assert g.created != g.modified
+    assert g.last_modified == g.modified
+
+    # check server-side expression is at least valid
+    session.query(gizmo_type).filter(gizmo_type.last_modified != None).all()
+
+    # FIXME: missing tests for NULL values and server-side tests
