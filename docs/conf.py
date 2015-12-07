@@ -3,7 +3,7 @@
 project = u'alcohol'
 copyright = u'2015, Marc Brinkmann'
 version = '0.5'
-release = '0.5.dev1'
+release = '0.5'
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'alabaster']
 source_suffix = '.rst'
