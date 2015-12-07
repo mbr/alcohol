@@ -1,3 +1,7 @@
+0.5
+---
+* Added ``sqlalchemy`` dependency (might go away)
+
 0.4.1
 -----
 * Added ``last_modified`` property.
