@@ -19,5 +19,8 @@ setup(name='alcohol',
       url='http://github.com/mbr/alcohol',
       license='MIT',
       packages=find_packages(exclude=['tests']),
-      install_requires=['blinker', 'passlib>=1.6', 'six', 'itsdangerous>=0.14'],
-)
+      # FIXME: sqlalchemy is not a strict requirement, but building the docs
+      #        is not possible without right now. unleash needs to support
+      #        "for docs"-dependencies
+      install_requires=['blinker', 'passlib>=1.6', 'six', 'itsdangerous>=0.14'
+                        'sqlalchemy'], )
